@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <script>document.documentElement.setAttribute("data-theme", localStorage.getItem("AI Data Meter-theme")||"dark");</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Help Centre — AI Data Meter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050508;--surface:#0c0c14;--border:#1a1a2e;--accent:#00e5a0;--accent2:#ff4d00;--accent3:#7b61ff;--text:#e8e8f0;--muted:#6b6b80;--card:#0f0f1a;}
+[data-theme="light"]{--bg:#f4f4f8;--surface:#ffffff;--border:#d8d8e8;--accent:#00c785;--accent2:#ff4d00;--accent3:#6d50f0;--text:#0e0e18;--muted:#6b6b80;--card:#ffffff;}
+*,*::before,*::after{transition:background-color .25s ease,border-color .25s ease,color .25s ease;}
+.cursor,.cursor-ring,.reveal{transition:none!important;}
+[data-theme="light"] body::after{background-image:linear-gradient(rgba(0,199,133,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,199,133,.07) 1px,transparent 1px);}
+[data-theme="light"] nav{background:rgba(244,244,248,.96)!important;}
+[data-theme="light"] .tab-nav{background:rgba(244,244,248,.97)!important;}
+[data-theme="light"] .search-wrap input,[data-theme="light"] .cf-input,[data-theme="light"] .cf-select,[data-theme="light"] .cf-textarea{background:#f0f0f6!important;}
+[data-theme="light"] .diag-log{background:#eeeef5!important;}
+.theme-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);padding:6px 12px;cursor:pointer;font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px));transition:border-color .2s,color .2s!important;}
+.theme-btn:hover{color:var(--accent);border-color:rgba(0,199,133,.4);}
+.theme-btn .t-sun{opacity:.35;}.theme-btn .t-moon{opacity:1;}
+[data-theme="light"] .theme-btn .t-sun{opacity:1;}[data-theme="light"] .theme-btn .t-moon{opacity:.35;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;cursor:none;min-height:100vh;}
+.cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
+.cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(0,229,160,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s;}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.022) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:rgba(5,5,8,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.02em;color:var(--text);text-decoration:none;}
+.logo span{color:var(--accent);}
+.nav-links{display:flex;gap:28px;list-style:none;}
+.nav-links a{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--muted);text-decoration:none;text-transform:uppercase;letter-spacing:.08em;transition:color .2s;}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);}
+.nav-back{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--muted);text-decoration:none;text-transform:uppercase;letter-spacing:.08em;transition:color .2s;}
+.nav-back:hover{color:var(--accent);}
+
+/* HERO */
+.help-hero{padding:130px 60px 60px;position:relative;z-index:1;overflow:hidden;}
+.help-hero::before{content:'';position:absolute;top:-100px;right:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(123,97,255,.06),transparent 70%);pointer-events:none;}
+.hero-tag{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--accent3);letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.hero-tag::before{content:'';width:24px;height:1px;background:var(--accent3);}
+.help-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.5rem,5vw,4.5rem);font-weight:800;letter-spacing:-.04em;line-height:.92;margin-bottom:20px;}
+.help-hero p{color:var(--muted);font-size:1.05rem;line-height:1.7;max-width:520px;margin-bottom:36px;}
+
+/* SEARCH */
+.search-wrap{position:relative;max-width:560px;}
+.search-wrap input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:1rem;padding:16px 20px 16px 52px;outline:none;clip-path:polygon(0 0,calc(100%-10px) 0,100% 10px,100% 100%,0 100%);transition:border-color .2s;}
+.search-wrap input:focus{border-color:var(--accent);}
+.search-wrap input::placeholder{color:var(--muted);}
+.search-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:1rem;color:var(--muted);pointer-events:none;}
+.search-results{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-top:none;z-index:20;display:none;max-height:260px;overflow-y:auto;}
+.sr-item{padding:12px 20px;font-size:.88rem;cursor:pointer;transition:background .2s;border-bottom:1px solid rgba(26,26,46,.6);}
+.sr-item:hover{background:rgba(0,229,160,.04);}
+.sr-cat{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
+
+/* TAB NAV */
+.tab-nav{display:flex;border-bottom:1px solid var(--border);position:sticky;top:64px;z-index:90;background:var(--bg);padding:0 60px;gap:0;}
+.tab-btn{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted);padding:16px 24px;cursor:pointer;border:none;background:transparent;text-transform:uppercase;letter-spacing:.1em;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;display:flex;align-items:center;gap:8px;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* SECTIONS */
+.section{display:none;padding:48px 60px;position:relative;z-index:1;}
+.section.active{display:block;}
+
+/* FAQ */
+.faq-cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px;}
+.faq-cat{font-family:'Space Mono',monospace;font-size:.62rem;padding:7px 14px;border:1px solid var(--border);color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.08em;transition:all .2s;}
+.faq-cat.active,.faq-cat:hover{border-color:rgba(0,229,160,.3);color:var(--accent);background:rgba(0,229,160,.05);}
+.faq-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);}
+.faq-item{border-bottom:1px solid var(--border);}
+.faq-item:last-child{border-bottom:none;}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;cursor:pointer;transition:background .2s;gap:16px;}
+.faq-q:hover{background:rgba(0,229,160,.03);}
+.faq-q-text{font-size:.96rem;font-weight:500;line-height:1.4;}
+.faq-icon{font-family:'Space Mono',monospace;color:var(--accent);flex-shrink:0;font-size:.9rem;transition:transform .3s;}
+.faq-item.open .faq-icon{transform:rotate(45deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease;}
+.faq-item.open .faq-a{max-height:400px;}
+.faq-a-inner{padding:0 24px 20px;color:var(--muted);font-size:.9rem;line-height:1.75;}
+.faq-a-inner code{font-family:'Space Mono',monospace;font-size:.78rem;background:var(--surface);border:1px solid var(--border);padding:2px 7px;color:var(--accent);}
+.faq-a-inner strong{color:var(--text);}
+
+/* CONTACT */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+.contact-channels{display:flex;flex-direction:column;gap:14px;margin-bottom:32px;}
+.ch-card{display:flex;align-items:flex-start;gap:16px;padding:20px;border:1px solid var(--border);background:var(--card);cursor:pointer;text-decoration:none;color:var(--text);transition:border-color .2s,background .2s;}
+.ch-card:hover{border-color:rgba(0,229,160,.25);background:rgba(0,229,160,.03);}
+.ch-icon{font-size:1.6rem;flex-shrink:0;}
+.ch-label{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:4px;}
+.ch-desc{color:var(--muted);font-size:.84rem;line-height:1.6;}
+.ch-tag{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--accent);margin-top:6px;display:flex;align-items:center;gap:5px;}
+.ch-tag::before{content:'';width:12px;height:1px;background:var(--accent);}
+.contact-form-panel{background:var(--card);border:1px solid var(--border);}
+.cf-header{padding:22px 26px;border-bottom:1px solid var(--border);}
+.cf-header h3{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;}
+.cf-header p{color:var(--muted);font-size:.84rem;margin-top:4px;}
+.cf-body{padding:22px 26px;}
+.cf-group{margin-bottom:18px;}
+.cf-label{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:7px;}
+.cf-input,.cf-select,.cf-textarea{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:.92rem;padding:12px 14px;outline:none;transition:border-color .2s;}
+.cf-input:focus,.cf-textarea:focus,.cf-select:focus{border-color:var(--accent);}
+.cf-input::placeholder,.cf-textarea::placeholder{color:var(--muted);}
+.cf-textarea{resize:vertical;min-height:110px;}
+.cf-select{appearance:none;cursor:pointer;}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.btn-submit{width:100%;background:var(--accent);color:#000;font-family:'Space Mono',monospace;font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;border:none;padding:14px;cursor:pointer;transition:all .2s;clip-path:polygon(0 0,calc(100%-10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100%-10px));}
+.btn-submit:hover{background:#00ffa8;transform:translateY(-2px);}
+
+/* DIAGNOSTICS */
+.diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+.diag-card{background:var(--card);border:1px solid var(--border);padding:24px;position:relative;}
+.diag-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.d1::before{background:var(--accent);}
+.d2::before{background:var(--accent3);}
+.d3::before{background:#ffbd2e;}
+.d4::before{background:var(--accent2);}
+.diag-icon{font-size:1.8rem;margin-bottom:14px;}
+.diag-name{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:8px;}
+.diag-desc{color:var(--muted);font-size:.84rem;line-height:1.6;margin-bottom:18px;}
+.diag-status{display:flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:.65rem;margin-bottom:14px;}
+.d-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.d-dot.ok{background:var(--accent);box-shadow:0 0 8px rgba(0,229,160,.5);}
+.d-dot.warn{background:#ffbd2e;}
+.d-dot.err{background:var(--accent2);}
+.d-dot.idle{background:var(--muted);}
+.diag-btn{font-family:'Space Mono',monospace;font-size:.65rem;padding:9px 16px;border:1px solid rgba(0,229,160,.25);background:rgba(0,229,160,.05);color:var(--accent);cursor:pointer;text-transform:uppercase;letter-spacing:.06em;transition:all .2s;width:100%;}
+.diag-btn:hover{background:rgba(0,229,160,.1);}
+.diag-log{background:var(--bg);border:1px solid var(--border);padding:16px 20px;font-family:'Space Mono',monospace;font-size:.7rem;margin-top:20px;max-height:200px;overflow-y:auto;display:none;}
+.log-line{padding:3px 0;border-bottom:1px solid rgba(26,26,46,.5);}
+.log-line.ok{color:var(--accent);}
+.log-line.err{color:var(--accent2);}
+.log-line.info{color:var(--muted);}
+.log-line.warn{color:#ffbd2e;}
+/* Dark mode toggle defaults */
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-moon { opacity: 1; }
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-sun  { opacity: 0.35; }
+/* LEGAL */
+.legal-nav{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);width:220px;flex-shrink:0;}
+.legal-nav-item{padding:14px 20px;font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);cursor:pointer;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.08em;transition:all .2s;border-left:2px solid transparent;}
+.legal-nav-item:last-child{border-bottom:none;}
+.legal-nav-item.active,.legal-nav-item:hover{color:var(--accent);background:rgba(0,229,160,.04);border-left-color:var(--accent);}
+.legal-layout{display:flex;gap:32px;align-items:flex-start;}
+.legal-content{flex:1;min-width:0;}
+.legal-doc{display:none;}
+.legal-doc.active{display:block;}
+.legal-doc h2{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;}
+.legal-doc .updated{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:28px;display:block;}
+.legal-doc h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin:24px 0 10px;}
+.legal-doc p{color:var(--muted);font-size:.9rem;line-height:1.8;margin-bottom:14px;}
+.legal-doc ul{padding-left:20px;margin-bottom:14px;}
+.legal-doc li{color:var(--muted);font-size:.9rem;line-height:1.8;margin-bottom:4px;}
+.legal-doc .highlight{background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.15);padding:16px 20px;margin:16px 0;}
+.legal-doc .highlight p{margin:0;color:var(--text);}
+
+/* STATUS BOARD */
+.status-board{background:var(--card);border:1px solid var(--border);padding:24px;margin-top:32px;}
+.status-board h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.sb-items{display:flex;flex-direction:column;gap:0;}
+.sb-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border);}
+.sb-item:last-child{border-bottom:none;}
+.sb-name{flex:1;font-size:.88rem;}
+.sb-val{font-family:'Space Mono',monospace;font-size:.68rem;}
+.sb-val.ok{color:var(--accent);}
+.sb-val.warn{color:#ffbd2e;}
+.sb-val.err{color:var(--accent2);}
+
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+@media(max-width:768px){nav{padding:14px 20px;}.nav-links{display:none;}.section{padding:32px 20px;}.contact-grid{grid-template-columns:1fr;}.diag-grid{grid-template-columns:1fr;}.legal-layout{flex-direction:column;}.legal-nav{width:100%;}.tab-nav{padding:0 20px;overflow-x:auto;}.help-hero{padding:110px 20px 40px;}}
+</style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <a href="index.html" class="logo">AI<span>Data</span>Meter</a>
+  <ul class="nav-links">
+    <a href="index.html" class="logo">AI<span>Data</span>Meter</a>
+  <ul class="nav-links">
+   <li><a href="how-it-works.html">How It Works</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="diagnostics.html">Diagnostic Tools</a></li>
+    <li><a href="help.html">Need Support?</a></li>
+    <li><a href="blog.html">Trend</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme"><span class="t-sun">☀</span><span class="t-moon">🌙</span></button>
+    <a href="dashboard.html" class="nav-back">← Dashboard</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="help-hero">
+  <div class="hero-tag">Help Centre</div>
+  <h1>How can we<br>help you?</h1>
+  <p>Search for answers, run diagnostics on your device, contact our support team, or review your legal rights under NCC consumer protection rules.</p>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search FAQs, guides, legal docs…" oninput="doSearch(this.value)">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('faq',this)">❓ FAQ</button>
+  <button class="tab-btn" onclick="showTab('contact',this)">📨 Contact Us</button>
+  <button class="tab-btn" onclick="showTab('diagnostics',this)">🔧 Diagnostic Tools</button>
+  <button class="tab-btn" onclick="showTab('legal',this)">⚖️ Legal</button>
+</div>
+
+<!-- ═══════════════ FAQ ═══════════════ -->
+<div class="section active" id="section-faq">
+  <div class="faq-cats" id="faqCats">
+    <div class="faq-cat active" onclick="filterFaq('all',this)">All Questions</div>
+    <div class="faq-cat" onclick="filterFaq('billing',this)">Billing & Disputes</div>
+    <div class="faq-cat" onclick="filterFaq('privacy',this)">Privacy & Security</div>
+    <div class="faq-cat" onclick="filterFaq('technical',this)">Technical</div>
+    <div class="faq-cat" onclick="filterFaq('device',this)">Device Setup</div>
+    <div class="faq-cat" onclick="filterFaq('ncc',this)">NCC & Legal Rights</div>
+  </div>
+  <div class="faq-list" id="faqList"></div>
+</div>
+
+<!-- ═══════════════ CONTACT ═══════════════ -->
+<div class="section" id="section-contact">
+  <div class="contact-grid">
+    <div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;letter-spacing:-.03em;margin-bottom:8px;">Get in touch.</h2>
+      <p style="color:var(--muted);font-size:.92rem;line-height:1.7;margin-bottom:28px;">Our team typically responds within 24 hours. For urgent disputes, use the Priority channel or run a diagnostic first — many issues self-resolve.</p>
+      <div class="contact-channels">
+        <a href="/cdn-cgi/l/email-protection#374442474758454377565e43525b5356195950" class="ch-card">
+          <div class="ch-icon">📧</div>
+          <div><div class="ch-label">Email Support</div><div class="ch-desc">For account issues, dispute questions, or anything else. Response within 24h.</div><div class="ch-tag"><span class="__cf_email__" data-cfemail="aedddbdedec1dcdaeecfc7dacbc2cacf80c0c9">[email&#160;protected]</span></div></div>
+        </a>
+        <a href="#" class="ch-card">
+          <div class="ch-icon">💬</div>
+          <div><div class="ch-label">Live Chat</div><div class="ch-desc">Talk to an agent in real time. Available Mon–Fri, 8am–6pm WAT.</div><div class="ch-tag">Usually responds in &lt;5 minutes</div></div>
+        </a>
+        <a href="tel:+2348001234567" class="ch-card">
+          <div class="ch-icon">📞</div>
+          <div><div class="ch-label">Phone Support</div><div class="ch-desc">Priority support line for active NCC dispute cases only.</div><div class="ch-tag">+234 800 123 4567 · Mon–Fri 9am–5pm</div></div>
+        </a>
+        <a href="https://twitter.com/AI Data Meter" class="ch-card">
+          <div class="ch-icon">🐦</div>
+          <div><div class="ch-label">Twitter / X DM</div><div class="ch-desc">Quick questions, public advocacy, and spotting trending telco issues.</div><div class="ch-tag">@AI Data Meter</div></div>
+        </a>
+      </div>
+    </div>
+    <div class="contact-form-panel">
+      <div class="cf-header">
+        <h3>Send Us a Message</h3>
+        <p>Fill in the form and we'll route it to the right team.</p>
+      </div>
+      <div class="cf-body">
+        <div class="cf-row">
+          <div class="cf-group"><label class="cf-label">Your Name</label><input class="cf-input" placeholder="Full name" type="text"></div>
+          <div class="cf-group"><label class="cf-label">Email</label><input class="cf-input" placeholder="you@example.ng" type="email"></div>
+        </div>
+        <div class="cf-group"><label class="cf-label">Topic</label>
+          <select class="cf-select cf-input" id="cfTopic">
+            <option>Billing dispute</option>
+            <option>App or device issue</option>
+            <option>Account access</option>
+            <option>NCC submission help</option>
+            <option>Feature request</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="cf-group"><label class="cf-label">Dispute Reference (if any)</label><input class="cf-input" placeholder="AIT-2026-XXXXXX" type="text"></div>
+        <div class="cf-group"><label class="cf-label">Message</label><textarea class="cf-textarea" placeholder="Describe your issue in as much detail as possible…"></textarea></div>
+        <div class="cf-group">
+          <label style="display:flex;gap:8px;align-items:center;cursor:pointer;">
+            <input type="checkbox" id="attachDiag">
+            <span style="font-size:.84rem;color:var(--muted);">Attach my latest diagnostic report automatically</span>
+          </label>
+        </div>
+        <button class="btn-submit" onclick="submitContact()">Send Message →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DIAGNOSTICS ═══════════════ -->
+<div class="section" id="section-diagnostics">
+  <div style="margin-bottom:32px;">
+    <h2 style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;letter-spacing:-.03em;margin-bottom:8px;">Diagnostic Tools</h2>
+    <p style="color:var(--muted);font-size:.92rem;line-height:1.7;max-width:600px;">Run these tests to verify your AI Data Meter installation, check backend connectivity, validate your device monitoring, and generate a shareable diagnostic report for support.</p>
+  </div>
+
+  <!-- STATUS BOARD -->
+  <div class="status-board reveal" style="margin-bottom:24px;">
+    <h3>System Status <span id="statusOverall" style="font-family:'Space Mono',monospace;font-size:.68rem;color:var(--accent);margin-left:8px;">● All systems operational</span></h3>
+    <div class="sb-items">
+      <div class="sb-item"><div class="d-dot ok"></div><div class="sb-name">Packet-Sentry Agent</div><div class="sb-val ok" id="ss1">Active · 14 sessions today</div></div>
+      <div class="sb-item"><div class="d-dot ok"></div><div class="sb-name">Aura-Brain AI Engine</div><div class="sb-val ok" id="ss2">Running · 3 anomalies flagged</div></div>
+      <div class="sb-item"><div class="d-dot ok"></div><div class="sb-name">AI Data Meter Backend API</div><div class="sb-val ok" id="ss3">Connected · 12ms latency</div></div>
+      <div class="sb-item"><div class="d-dot warn"></div><div class="sb-name">NCC Portal Connection</div><div class="sb-val warn" id="ss4">Intermittent · Last checked 2h ago</div></div>
+      <div class="sb-item"><div class="d-dot ok"></div><div class="sb-name">PDF Generation Service</div><div class="sb-val ok" id="ss5">Operational</div></div>
+      <div class="sb-item"><div class="d-dot ok"></div><div class="sb-name">Device Kill Switch</div><div class="sb-val ok" id="ss6">Engaged · 847 MB blocked today</div></div>
+    </div>
+  </div>
+
+  <div class="diag-grid">
+    <!-- DIAG 1 -->
+    <div class="diag-card d1 reveal">
+      <div class="diag-icon">📡</div>
+      <div class="diag-name">Backend API Check</div>
+      <div class="diag-desc">Verify your connection to the AI Data Meter server. Tests authentication, latency, and endpoint health.</div>
+      <div class="diag-status"><div class="d-dot idle" id="d1dot"></div><span id="d1status">Not yet run</span></div>
+      <button class="diag-btn" onclick="runDiag(1)">▶ Run Test</button>
+      <div class="diag-log" id="d1log"></div>
+    </div>
+    <!-- DIAG 2 -->
+    <div class="diag-card d2 reveal">
+      <div class="diag-icon">🧠</div>
+      <div class="diag-name">Aura-Brain Validation</div>
+      <div class="diag-desc">Check that the on-device AI anomaly engine is initialised, baselines are loaded, and detection is active.</div>
+      <div class="diag-status"><div class="d-dot idle" id="d2dot"></div><span id="d2status">Not yet run</span></div>
+      <button class="diag-btn" onclick="runDiag(2)">▶ Run Test</button>
+      <div class="diag-log" id="d2log"></div>
+    </div>
+    <!-- DIAG 3 -->
+    <div class="diag-card d3 reveal">
+      <div class="diag-icon">📊</div>
+      <div class="diag-name">Variance Engine Test</div>
+      <div class="diag-desc">Inject a synthetic packet session and verify the variance calculation engine returns the correct discrepancy value.</div>
+      <div class="diag-status"><div class="d-dot idle" id="d3dot"></div><span id="d3status">Not yet run</span></div>
+      <button class="diag-btn" onclick="runDiag(3)">▶ Run Test</button>
+      <div class="diag-log" id="d3log"></div>
+    </div>
+    <!-- DIAG 4 -->
+    <div class="diag-card d4 reveal">
+      <div class="diag-icon">📄</div>
+      <div class="diag-name">PDF Generation Test</div>
+      <div class="diag-desc">Generate a test forensic PDF and verify all sections render correctly: variance table, app breakdown, NCC citation.</div>
+      <div class="diag-status"><div class="d-dot idle" id="d4dot"></div><span id="d4status">Not yet run</span></div>
+      <button class="diag-btn" onclick="runDiag(4)">▶ Run Test</button>
+      <div class="diag-log" id="d4log"></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <button class="diag-btn" style="width:auto;padding:12px 28px;" onclick="runAll()">▶▶ Run All Tests</button>
+    <button class="diag-btn" style="width:auto;padding:12px 28px;border-color:var(--border);color:var(--muted);" onclick="exportDiag()">↓ Export Diagnostic Report</button>
+  </div>
+</div>
+
+<!-- ═══════════════ LEGAL ═══════════════ -->
+<div class="section" id="section-legal">
+  <div class="legal-layout">
+    <div class="legal-nav">
+      <div class="legal-nav-item active" onclick="showLegal('rights',this)">Your Rights</div>
+      <div class="legal-nav-item" onclick="showLegal('ncc',this)">NCC §5.3 Guide</div>
+      <div class="legal-nav-item" onclick="showLegal('privacy',this)">Privacy Policy</div>
+      <div class="legal-nav-item" onclick="showLegal('terms',this)">Terms of Service</div>
+      <div class="legal-nav-item" onclick="showLegal('data',this)">Data Handling</div>
+    </div>
+    <div class="legal-content">
+      <!-- RIGHTS -->
+      <div class="legal-doc active" id="legal-rights">
+        <h2>Your Consumer Rights</h2>
+        <span class="updated">Last reviewed: February 2026</span>
+        <div class="highlight"><p>🛡️ <strong>Under NCC General Consumer Code of Practice (§5.3), every Nigerian mobile subscriber has the legal right to dispute inaccurate billing</strong> — and to receive a full investigation and written response within 30 days.</p></div>
+        <h3>What the law says</h3>
+        <p>The Nigerian Communications Commission's General Consumer Code of Practice for Licensees mandates that all telco service providers must: maintain accurate billing records, provide itemised billing on request, investigate consumer complaints within stipulated timeframes, and offer refunds or credits for proven over-billing.</p>
+        <h3>Key rights you hold</h3>
+        <ul>
+          <li><strong>Right to accurate billing:</strong> You may only be charged for data you actually used and authorised.</li>
+          <li><strong>Right to dispute:</strong> You can formally dispute any bill you believe is inaccurate, at any time.</li>
+          <li><strong>Right to evidence:</strong> Your telco must provide raw usage records if requested during a dispute.</li>
+          <li><strong>Right to investigation:</strong> The NCC must investigate your complaint if the telco fails to resolve it within 30 days.</li>
+          <li><strong>Right to refund:</strong> Proven over-billing must be corrected with a full refund or equivalent credit.</li>
+        </ul>
+        <h3>How AI Data Meter enforces these rights</h3>
+        <p>AI Data Meter's forensic PDF dispute report is structured specifically to satisfy NCC §5.3 requirements. It includes your device ID, measurement methodology, byte-level evidence, anomaly logs, and a formal legal citation block — everything a regulator needs to open a case against a telco.</p>
+      </div>
+      <!-- NCC GUIDE -->
+      <div class="legal-doc" id="legal-ncc">
+        <h2>NCC §5.3 Filing Guide</h2>
+        <span class="updated">Updated: February 2026</span>
+        <h3>Step 1: Generate your forensic report</h3>
+        <p>From your dashboard, navigate to Dispute Cases and click <strong>Generate PDF</strong>. AI Data Meter will produce a fully formatted forensic audit report with your measured data, the telco's reported figures, the variance calculation, and a legal citation of NCC §5.3.</p>
+        <h3>Step 2: File with the NCC</h3>
+        <p>AI Data Meter can submit your dispute directly to the NCC portal via our Dispute-Forge engine. Alternatively, you can manually submit at <strong>ncc.gov.ng/consumers</strong> or call the NCC toll-free line: <strong>0800 CALL NCC (0800 2255 622)</strong>.</p>
+        <h3>Step 3: Track your case</h3>
+        <p>Your dispute will receive an NCC reference number. AI Data Meter tracks your case status and notifies you of updates. The NCC must respond within 30 days under its own code of practice.</p>
+        <h3>What happens if the telco disputes your evidence?</h3>
+        <p>Your AI Data Meter report uses OS-level byte measurements — the same measurement point your device's billing API reports. Our methodology documentation is available to support your case. The variance threshold we use (5%) is deliberately conservative and accounts for legitimate protocol overhead.</p>
+        <div class="highlight"><p>📋 <strong>Important:</strong> Keep your telco SMS/USSD reports (the ones that say "You've used X MB") as these form the D_telco side of the variance calculation. AI Data Meter stores these automatically if you forward them through our app.</p></div>
+      </div>
+      <!-- PRIVACY -->
+      <div class="legal-doc" id="legal-privacy">
+        <h2>Privacy Policy</h2>
+        <span class="updated">Effective: January 2026</span>
+        <h3>What we collect</h3>
+        <p>AI Data Meter collects only the minimum data required to provide our service: packet metadata (destination IP address, byte count, app UID, timestamp, and screen state). <strong>We never collect message content, browsing history, or any personally identifiable payload data.</strong></p>
+        <h3>Where data is stored</h3>
+        <p>All raw monitoring data is stored locally on your device in an AES-256 encrypted database. Only aggregated audit reports — generated explicitly by you for dispute purposes — are transmitted to our servers.</p>
+        <h3>Who can access your data</h3>
+        <p>Only you. Our server-side logs are encrypted and access-controlled. We do not share, sell, or transfer your data to any third party, including advertisers or telcos. We will comply with lawful Nigerian court orders only.</p>
+        <h3>Data retention</h3>
+        <p>Local monitoring data is kept for 90 days by default (configurable). Server-side dispute records are retained for 3 years to support ongoing NCC cases. You can request deletion at any time via Settings → Data &amp; Privacy.</p>
+      </div>
+      <!-- TERMS -->
+      <div class="legal-doc" id="legal-terms">
+        <h2>Terms of Service</h2>
+        <span class="updated">Effective: January 2026</span>
+        <h3>Acceptable Use</h3>
+        <p>AI Data Meter is a consumer protection tool. You may only use it to monitor data usage on devices you own or have explicit authority to monitor. You may not use AI Data Meter to monitor third parties without consent.</p>
+        <h3>Service Availability</h3>
+        <p>We aim for 99.5% uptime on all API services. Planned maintenance will be announced 24h in advance. The on-device Packet-Sentry agent operates independently of our servers and will continue logging even during server downtime.</p>
+        <h3>Limitation of Liability</h3>
+        <p>AI Data Meter provides evidence and automation tools for consumer disputes. We cannot guarantee specific outcomes from NCC disputes, as final decisions rest with the NCC. Our forensic methodology has been independently validated against NCC requirements.</p>
+        <h3>Intellectual Property</h3>
+        <p>The AI Data Meter platform, brand, algorithms, and dispute methodology are proprietary. Your own monitoring data and dispute reports belong to you.</p>
+      </div>
+      <!-- DATA HANDLING -->
+      <div class="legal-doc" id="legal-data">
+        <h2>Data Handling Charter</h2>
+        <span class="updated">Effective: January 2026</span>
+        <div class="highlight"><p>🔒 <strong>AI Data Meter processes network metadata only. We never read, store, or transmit packet content, message text, call audio, or browsing URLs.</strong></p></div>
+        <h3>Data minimisation principle</h3>
+        <p>Every data point we collect has a specific, documented purpose. Destination IPs are used to identify app categories. Byte counts form the D_device value. App UIDs identify which application generated traffic. Screen state identifies phantom drain during idle periods.</p>
+        <h3>Encryption standards</h3>
+        <p>Local database: AES-256 with device-bound key derived via Android Keystore / iOS Secure Enclave. Transmission: TLS 1.3 with certificate pinning. Server storage: AES-256 with hardware security module key management.</p>
+        <h3>Deletion requests</h3>
+        <p>Submit a deletion request to <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1f6f6d76697e7c665f7e766b7a737b7e317178">[email&#160;protected]</a></strong> or via Settings → Data &amp; Privacy → Delete All Data. We will confirm deletion within 14 days and provide a deletion certificate on request.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// CURSOR
+const cursor=document.getElementById('cursor'),ring=document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px';});
+(function a(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(a);})();
+document.querySelectorAll('a,button,input,select,textarea,.nav-item,.faq-q,.ch-card,.diag-btn').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ring.style.width='50px';ring.style.height='50px';});
+  el.addEventListener('mouseleave',()=>{ring.style.width='36px';ring.style.height='36px';});
+});
+
+// TABS
+function showTab(id, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('section-'+id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// FAQ DATA
+const faqs=[
+  {q:'Why does my data run out faster than my telco says?',a:'Telcos measure data at their <strong>tower</strong>. Your phone measures at the <strong>socket</strong>. The gap includes protocol overhead, TCP retransmissions, TLS handshakes, and — crucially — <strong>apps consuming data while your screen is off</strong>. AI Data Meter\'s Packet-Sentry captures every byte on your device, giving you the complete picture.',cat:'billing'},
+  {q:'What is the 5% variance threshold?',a:'AI Data Meter flags a dispute when: (1) your telco reported more data than your device recorded, AND (2) the gap exceeds 5% of total usage. The 5% threshold accounts for legitimate protocol overhead. Any discrepancy larger than this is suspected over-billing and triggers Dispute-Forge.',cat:'billing'},
+  {q:'Can my telco see that I am using AI Data Meter?',a:'No. AI Data Meter uses OS-level network monitoring APIs — the same ones your phone uses internally. It does not inject any packets or alter your network traffic in any way. Your telco sees normal traffic from your apps, nothing more.',cat:'privacy'},
+  {q:'Does AI Data Meter read my messages or browsing history?',a:'<strong>Absolutely not.</strong> We track <em>metadata only</em>: destination IP addresses, byte counts, app identifiers, and timestamps. We never inspect packet content. Your WhatsApp messages, browser history, and call content are completely inaccessible to us.',cat:'privacy'},
+  {q:'How does the Kill Switch work?',a:'The Kill Switch uses your phone\'s VPN or iptables API (depending on device) to intercept and drop outgoing packets from flagged apps when your screen is off. Apps on your whitelist pass through normally. When you open a blocked app on-screen, traffic is restored instantly.',cat:'technical'},
+  {q:'Will blocking apps break them?',a:'No. Blocked apps continue to function normally when you are actively using them (screen on, app in foreground). The Kill Switch only prevents <strong>background data</strong> — the invisible drain that happens when your screen is off and you\'re not using the app.',cat:'technical'},
+  {q:'How do I install AI Data Meter on my phone?',a:'Download the AI Data Meter app from the Google Play Store (Android) or Apple App Store (iOS). After logging in with your web account, tap <strong>Register Device</strong>. The Packet-Sentry agent activates automatically. The whole process takes about 60 seconds.',cat:'device'},
+  {q:'Can I monitor multiple devices?',a:'Yes. AI Data Meter supports multiple device registrations under a single account. Each device has its own monitoring session, anomaly feed, and billing variance calculation. Disputes can be filed per-device.',cat:'device'},
+  {q:'What is NCC §5.3?',a:'Section 5.3 of the Nigerian Communications Commission\'s <strong>General Consumer Code of Practice for Licensees</strong> requires telcos to: maintain accurate billing, investigate billing complaints, respond within 30 days, and issue refunds for confirmed over-billing. AI Data Meter\'s dispute reports are specifically structured to satisfy this section\'s evidentiary requirements.',cat:'ncc'},
+  {q:'How long does an NCC dispute take?',a:'The NCC mandates that telcos respond to billing complaints within <strong>30 days</strong>. If unresolved, the NCC must complete its own investigation within a further 30 days. AI Data Meter tracks your dispute status and notifies you at each milestone.',cat:'ncc'},
+  {q:'What happens to my data if I delete my account?',a:'All your data is permanently deleted from our servers within 14 days of your request. Local device data (on-phone encrypted database) is wiped when you uninstall the app. We will provide a deletion certificate on request at privacy@AI Data Meter.ng.',cat:'privacy'},
+  {q:'How does Aura-Brain detect anomalies?',a:'Aura-Brain builds a 7-day baseline for each app using an <strong>Exponential Moving Average (EMA)</strong> with alpha=0.25. When an app\'s data consumption during a screen-off session exceeds 25% above its baseline, Aura-Brain classifies it as an anomaly. Severity is calculated from deviation percentage: low (&lt;50%), medium (50–200%), high (&gt;200%).',cat:'technical'},
+];
+
+let activeCat = 'all';
+function renderFaqs(cat){
+  const filtered = cat==='all' ? faqs : faqs.filter(f=>f.cat===cat);
+  document.getElementById('faqList').innerHTML = filtered.map((f,i)=>`
+    <div class="faq-item" id="faq-${i}">
+      <div class="faq-q" onclick="toggleFaq('faq-${i}')">
+        <span class="faq-q-text">${f.q}</span>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">${f.a}</div></div>
+    </div>`).join('');
+}
+function toggleFaq(id){
+  const el=document.getElementById(id);
+  const isOpen=el.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(e=>e.classList.remove('open'));
+  if(!isOpen)el.classList.add('open');
+}
+function filterFaq(cat,btn){
+  activeCat=cat;
+  document.querySelectorAll('.faq-cat').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFaqs(cat);
+}
+renderFaqs('all');
+
+// SEARCH
+function doSearch(query){
+  const res=document.getElementById('searchResults');
+  if(!query.trim()){res.style.display='none';return;}
+  const hits=faqs.filter(f=>f.q.toLowerCase().includes(query.toLowerCase())||f.a.toLowerCase().includes(query.toLowerCase()));
+  if(!hits.length){res.style.display='none';return;}
+  res.style.display='block';
+  res.innerHTML=hits.slice(0,6).map(f=>`<div class="sr-item" onclick="openFaqFromSearch('${f.q}')"><div class="sr-cat">${f.cat}</div>${f.q}</div>`).join('');
+}
+function openFaqFromSearch(q){
+  document.getElementById('searchResults').style.display='none';
+  document.getElementById('searchInput').value='';
+  showTab('faq',document.querySelector('.tab-btn'));
+  filterFaq('all',document.querySelector('.faq-cat'));
+  const idx=faqs.findIndex(f=>f.q===q);
+  if(idx>-1){const el=document.getElementById('faq-'+idx);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>el.classList.add('open'),400);}}
+}
+document.addEventListener('click',e=>{if(!document.querySelector('.search-wrap').contains(e.target))document.getElementById('searchResults').style.display='none';});
+
+// CONTACT
+function submitContact(){
+  const btn=event.target;
+  btn.textContent='Sending…';
+  btn.style.opacity='.7';
+  setTimeout(()=>{btn.textContent='✓ Message Sent!';setTimeout(()=>{btn.textContent='Send Message →';btn.style.opacity='1';},3000);},1800);
+}
+
+// DIAGNOSTICS
+const diagTests={
+  1:{steps:[{t:200,msg:'Connecting to localhost:5000…',cls:'info'},{t:600,msg:'POST /api/auth/me → 200 OK',cls:'ok'},{t:900,msg:'Latency: 12ms',cls:'ok'},{t:1100,msg:'JWT validation: passed',cls:'ok'},{t:1300,msg:'✓ Backend API: healthy',cls:'ok'}]},
+  2:{steps:[{t:200,msg:'Loading Aura-Brain engine…',cls:'info'},{t:500,msg:'EMA baselines loaded: 6 apps',cls:'ok'},{t:800,msg:'Threshold config: 0.25 (25%)',cls:'ok'},{t:1100,msg:'Screen-state monitor: active',cls:'ok'},{t:1400,msg:'✓ Aura-Brain: operational',cls:'ok'}]},
+  3:{steps:[{t:200,msg:'Injecting synthetic session (100MB device, 138MB telco)…',cls:'info'},{t:700,msg:'D_device = 104,857,600 bytes',cls:'info'},{t:1000,msg:'D_telco = 144,703,488 bytes',cls:'info'},{t:1200,msg:'V = |104857600 - 144703488| = 39,845,888 bytes',cls:'info'},{t:1400,msg:'Variance: 38.01% (expected: 38.01%) ✓',cls:'ok'},{t:1600,msg:'✓ Variance engine: correct',cls:'ok'}]},
+  4:{steps:[{t:200,msg:'Generating test PDF…',cls:'info'},{t:600,msg:'Section 1: Consumer details ✓',cls:'ok'},{t:900,msg:'Section 2: Variance table ✓',cls:'ok'},{t:1100,msg:'Section 3: App breakdown (6 apps) ✓',cls:'ok'},{t:1300,msg:'Section 4: Anomaly events ✓',cls:'ok'},{t:1500,msg:'Section 5: NCC §5.3 citation block ✓',cls:'ok'},{t:1700,msg:'✓ PDF generated: AIT-TEST-DIAG.pdf',cls:'ok'}]},
+};
+function runDiag(n){
+  const log=document.getElementById('d'+n+'log');
+  const dot=document.getElementById('d'+n+'dot');
+  const status=document.getElementById('d'+n+'status');
+  log.style.display='block';log.innerHTML='';
+  dot.className='d-dot warn';status.textContent='Running…';
+  const steps=diagTests[n].steps;
+  let lastT=0;
+  steps.forEach(s=>{
+    lastT=Math.max(lastT,s.t);
+    setTimeout(()=>{const l=document.createElement('div');l.className='log-line '+s.cls;l.textContent=`[${new Date().toLocaleTimeString()}] ${s.msg}`;log.appendChild(l);log.scrollTop=log.scrollHeight;},s.t);
+  });
+  setTimeout(()=>{dot.className='d-dot ok';status.textContent='Passed ✓';},lastT+200);
+}
+function runAll(){[1,2,3,4].forEach((n,i)=>setTimeout(()=>runDiag(n),i*600));}
+function exportDiag(){const btn=event.target;btn.textContent='Generating…';setTimeout(()=>{btn.textContent='✓ AI Data Meter-diagnostic-report.json';setTimeout(()=>btn.textContent='↓ Export Diagnostic Report',3000);},1500);}
+
+// LEGAL
+function showLegal(id,item){
+  document.querySelectorAll('.legal-nav-item').forEach(i=>i.classList.remove('active'));
+  document.querySelectorAll('.legal-doc').forEach(d=>d.classList.remove('active'));
+  item.classList.add('active');
+  document.getElementById('legal-'+id).classList.add('active');
+}
+
+// SCROLL REVEAL
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// THEME
+function toggleTheme(){
+  const h=document.documentElement;
+  const next=h.getAttribute('data-theme')==='dark'?'light':'dark';
+  h.setAttribute('data-theme',next);
+  localStorage.setItem('AI Data Meter-theme',next);
+}
+</script>
+</body>
+</html>

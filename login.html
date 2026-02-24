@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<script>document.documentElement.setAttribute("data-theme", localStorage.getItem("aitelda-theme")||"dark");</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — AI Data Meter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050508;
+    --surface: #0c0c14;
+    --border: #1a1a2e;
+    --accent: #00e5a0;
+    --accent2: #ff4d00;
+    --accent3: #7b61ff;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --card: #0f0f1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cursor {
+    position: fixed; width: 10px; height: 10px;
+    background: var(--accent); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s, height 0.2s;
+  }
+  .cursor-ring {
+    position: fixed; width: 36px; height: 36px;
+    border: 1px solid rgba(0,229,160,0.4); border-radius: 50%;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s, border-color 0.3s;
+  }
+
+  /* Grid + noise */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 48px;
+    background: rgba(5,5,8,0.9); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem;
+    letter-spacing: -0.02em; color: var(--text); text-decoration: none;
+  }
+  .logo span { color: var(--accent); }
+  .nav-back {
+    font-family: 'Space Mono', monospace; font-size: 0.72rem;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.08em;
+    text-transform: uppercase; transition: color 0.2s;
+  }
+  .nav-back:hover { color: var(--accent); }
+
+  /* LAYOUT */
+  .page-wrap {
+    flex: 1; display: grid; grid-template-columns: 1fr 1fr;
+    min-height: 100vh; position: relative; z-index: 1;
+  }
+
+  /* LEFT PANEL — visual */
+  .visual-panel {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    justify-content: center; padding: 140px 64px 60px;
+    position: relative; overflow: hidden;
+  }
+
+  .visual-panel::before {
+    content: '';
+    position: absolute; top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,229,160,0.07), transparent 70%);
+    pointer-events: none;
+  }
+
+  .visual-eyebrow {
+    font-family: 'Space Mono', monospace; font-size: 0.68rem;
+    color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+  }
+  .visual-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+
+  .visual-panel h2 {
+    font-family: 'Syne', sans-serif; font-size: clamp(2.2rem, 3.5vw, 3.2rem);
+    font-weight: 800; line-height: 0.95; letter-spacing: -0.04em; margin-bottom: 24px;
+  }
+  .visual-panel h2 em { font-style: normal; color: transparent; -webkit-text-stroke: 1px var(--accent); }
+
+  .visual-panel p { color: var(--muted); line-height: 1.7; max-width: 360px; font-size: 0.95rem; margin-bottom: 40px; }
+
+  /* Fake terminal mini */
+  .mini-terminal {
+    background: var(--card); border: 1px solid var(--border);
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    font-family: 'Space Mono', monospace; font-size: 0.72rem;
+    max-width: 380px;
+  }
+  .mt-bar {
+    background: var(--border); padding: 8px 14px;
+    display: flex; gap: 6px; align-items: center;
+  }
+  .mt-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .mt-body { padding: 16px; display: flex; flex-direction: column; gap: 7px; }
+  .mt-line { opacity: 0; animation: fadeIn 0.4s ease forwards; }
+  .mt-line:nth-child(1) { animation-delay: 0.3s; }
+  .mt-line:nth-child(2) { animation-delay: 0.8s; }
+  .mt-line:nth-child(3) { animation-delay: 1.3s; }
+  .mt-line:nth-child(4) { animation-delay: 1.8s; }
+  .mt-line:nth-child(5) { animation-delay: 2.3s; }
+  .mt-green { color: var(--accent); }
+  .mt-muted { color: var(--muted); }
+  .mt-orange { color: var(--accent2); }
+  .mt-purple { color: var(--accent3); }
+  .blink { display: inline-block; width: 7px; height: 12px; background: var(--accent); animation: blink 1s step-end infinite; vertical-align: middle; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  /* Stat pills */
+  .stat-pills { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+  .stat-pill {
+    padding: 8px 16px; border: 1px solid var(--border);
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+  }
+  .stat-pill span { color: var(--accent); margin-right: 6px; }
+
+  /* RIGHT PANEL — form */
+  .form-panel {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 140px 64px 60px; background: var(--bg);
+  }
+
+  .form-header { margin-bottom: 40px; }
+  .form-header .tag {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase;
+    margin-bottom: 12px; display: block;
+  }
+  .form-header h1 {
+    font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800;
+    letter-spacing: -0.03em; line-height: 1.05;
+  }
+  .form-header p { color: var(--muted); margin-top: 10px; font-size: 0.92rem; line-height: 1.6; }
+
+  /* Form */
+  .form-group { margin-bottom: 22px; }
+  .form-label {
+    font-family: 'Space Mono', monospace; font-size: 0.68rem;
+    color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
+    display: block; margin-bottom: 8px;
+  }
+  .form-input {
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Instrument Sans', sans-serif; font-size: 0.95rem;
+    padding: 14px 16px; outline: none;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .form-input::placeholder { color: var(--muted); }
+  .form-input:focus { border-color: var(--accent); background: #11111c; }
+
+  .input-wrap { position: relative; }
+  .input-icon {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 0.85rem; color: var(--muted); cursor: pointer;
+    transition: color 0.2s; background: none; border: none;
+    font-family: 'Space Mono', monospace;
+  }
+  .input-icon:hover { color: var(--accent); }
+
+  .form-options {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 28px; margin-top: -8px;
+  }
+  .checkbox-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .checkbox-wrap input { display: none; }
+  .custom-cb {
+    width: 16px; height: 16px; border: 1px solid var(--border);
+    background: var(--card); flex-shrink: 0; position: relative;
+    clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 0 100%);
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .checkbox-wrap input:checked ~ .custom-cb { background: var(--accent); border-color: var(--accent); }
+  .checkbox-wrap input:checked ~ .custom-cb::after {
+    content: '✓'; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; color: #000; font-weight: 700;
+  }
+  .cb-label { font-size: 0.82rem; color: var(--muted); }
+  .forgot-link {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.08em;
+    text-transform: uppercase; transition: color 0.2s;
+  }
+  .forgot-link:hover { color: var(--accent); }
+
+  .btn-submit {
+    width: 100%; background: var(--accent); color: #000;
+    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 0.82rem;
+    letter-spacing: 0.08em; text-transform: uppercase; border: none;
+    padding: 16px; cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .btn-submit:hover { background: #00ffa8; transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,229,160,0.25); }
+  .btn-submit:active { transform: translateY(0); }
+
+  /* Loading state */
+  .btn-submit.loading { pointer-events: none; }
+  .btn-submit.loading::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    animation: shimmer 1s infinite;
+  }
+  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+  .divider {
+    display: flex; align-items: center; gap: 16px; margin: 28px 0;
+    font-family: 'Space Mono', monospace; font-size: 0.62rem;
+    color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .form-footer {
+    text-align: center; font-size: 0.88rem; color: var(--muted);
+  }
+  .form-footer a {
+    color: var(--accent); text-decoration: none; font-weight: 500;
+    transition: opacity 0.2s;
+  }
+  .form-footer a:hover { opacity: 0.8; }
+
+  /* Error / success messages */
+  .msg {
+    padding: 12px 16px; margin-bottom: 20px;
+    font-family: 'Space Mono', monospace; font-size: 0.72rem;
+    letter-spacing: 0.05em; display: none;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  }
+  .msg.error { background: rgba(255,77,0,0.1); border: 1px solid rgba(255,77,0,0.3); color: var(--accent2); display: block; }
+  .msg.success { background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.3); color: var(--accent); display: block; }
+
+  /* Animated underline on inputs */
+  .form-input-wrap { position: relative; }
+  .form-input-wrap::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px; background: var(--accent);
+    transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease;
+  }
+  .form-input-wrap:focus-within::after { transform: scaleX(1); }
+
+  @media (max-width: 768px) {
+    .page-wrap { grid-template-columns: 1fr; }
+    .visual-panel { display: none; }
+    .form-panel { padding: 100px 24px 40px; }
+    nav { padding: 16px 20px; }
+  }
+
+  /* ═══════════════════════════════════════════════
+     LIGHT MODE — AiTelDa
+     Inverts all surface, background, text, and border
+     variables while preserving brand accent colours.
+  ═══════════════════════════════════════════════ */
+  [data-theme="light"] {
+    --bg:      #f4f4f8;
+    --surface: #ffffff;
+    --border:  #d8d8e8;
+    --text:    #0e0e18;
+    --muted:   #6b6b80;
+    --card:    #ffffff;
+    /* accent colours remain unchanged */
+    --accent:  #00c785;
+    --accent2: #ff4d00;
+    --accent3: #6d50f0;
+  }
+
+  /* Light-mode specific overrides */
+  [data-theme="light"] body {
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* Grid lines — subtler on light */
+  [data-theme="light"] body::after {
+    background-image:
+      linear-gradient(rgba(0,199,133,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,199,133,0.08) 1px, transparent 1px);
+  }
+
+  /* Nav glass */
+  [data-theme="light"] nav,
+  [data-theme="light"] .sidebar {
+    background: rgba(244,244,248,0.94) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Cards / surfaces */
+  [data-theme="light"] .card,
+  [data-theme="light"] .stat-card,
+  [data-theme="light"] .widget,
+  [data-theme="light"] .section-card,
+  [data-theme="light"] .comp-card,
+  [data-theme="light"] .feature-card,
+  [data-theme="light"] .tool-card,
+  [data-theme="light"] .val-card,
+  [data-theme="light"] .mission-point,
+  [data-theme="light"] .faq-item,
+  [data-theme="light"] .contact-card,
+  [data-theme="light"] .article-card,
+  [data-theme="light"] .diag-card,
+  [data-theme="light"] .diag-section,
+  [data-theme="light"] .err-terminal,
+  [data-theme="light"] .mini-terminal,
+  [data-theme="light"] .terminal,
+  [data-theme="light"] .code-block,
+  [data-theme="light"] .formula-box,
+  [data-theme="light"] .side-card,
+  [data-theme="light"] .qa,
+  [data-theme="light"] .ks-widget,
+  [data-theme="light"] .compare-col,
+  [data-theme="light"] .step-block,
+  [data-theme="light"] .bill-col,
+  [data-theme="light"] .pdf-card,
+  [data-theme="light"] .ncc-rights,
+  [data-theme="light"] .pipeline-step,
+  [data-theme="light"] .pipe-content,
+  [data-theme="light"] .meter-col,
+  [data-theme="light"] .anom-item,
+  [data-theme="light"] .blocked-item {
+    background: var(--card) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Input fields */
+  [data-theme="light"] input,
+  [data-theme="light"] textarea,
+  [data-theme="light"] select,
+  [data-theme="light"] .input-wrap input {
+    background: #f0f0f6 !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+  }
+  [data-theme="light"] input::placeholder,
+  [data-theme="light"] textarea::placeholder {
+    color: #9999aa !important;
+  }
+  [data-theme="light"] input:focus,
+  [data-theme="light"] textarea:focus {
+    border-color: var(--accent) !important;
+    background: #ffffff !important;
+  }
+
+  /* Sidebar */
+  [data-theme="light"] .sidebar {
+    background: #ffffff !important;
+    border-color: var(--border) !important;
+  }
+  [data-theme="light"] .sidebar-logo {
+    border-color: var(--border) !important;
+  }
+  [data-theme="light"] .nav-item:hover {
+    background: rgba(0,199,133,0.06) !important;
+  }
+  [data-theme="light"] .nav-item.active {
+    background: rgba(0,199,133,0.1) !important;
+  }
+
+  /* Top bars */
+  [data-theme="light"] .topbar,
+  [data-theme="light"] .ks-bar,
+  [data-theme="light"] .status-bar,
+  [data-theme="light"] .chapter-nav,
+  [data-theme="light"] .ch-nav,
+  [data-theme="light"] .tab-nav {
+    background: rgba(244,244,248,0.97) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Muted text stays readable */
+  [data-theme="light"] .muted,
+  [data-theme="light"] [class*="muted"] { color: #6b6b80 !important; }
+
+  /* Skeleton loader */
+  [data-theme="light"] .skel {
+    background: linear-gradient(90deg,#e0e0ee 25%,#eeeef8 50%,#e0e0ee 75%);
+    background-size: 200% 100%;
+  }
+
+  /* Toggle widget itself */
+  [data-theme="light"] .theme-toggle-btn { border-color: var(--border); }
+  [data-theme="light"] .theme-toggle-btn .tt-track { background: #e0e0ee; }
+  [data-theme="light"] .theme-toggle-btn .tt-icon-sun { opacity: 1; }
+  [data-theme="light"] .theme-toggle-btn .tt-icon-moon { opacity: 0.35; }
+
+  /* Dark mode toggle defaults */
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-moon { opacity: 1; }
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-sun  { opacity: 0.35; }
+
+  /* Noise overlay lighter in light mode */
+  [data-theme="light"] body::before { opacity: 0.15; }
+
+  /* Visual panels on auth pages */
+  [data-theme="light"] .visual-panel {
+    background: linear-gradient(135deg, #0e1a2e 0%, #0a1220 100%) !important;
+  }
+
+  /* Blog filter bar */
+  [data-theme="light"] .blog-filters,
+  [data-theme="light"] .breaking-banner {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Modals */
+  [data-theme="light"] .modal-overlay { background: rgba(244,244,248,0.92) !important; }
+  [data-theme="light"] .modal-panel { background: #ffffff !important; border-color: var(--border) !important; }
+
+  /* Tables */
+  [data-theme="light"] .dtable th { border-color: var(--border) !important; }
+  [data-theme="light"] .dtable td { border-color: #ebebf5 !important; }
+  [data-theme="light"] .dtable tr:hover td { background: rgba(0,199,133,0.03) !important; }
+
+  /* Scrollbars */
+  [data-theme="light"] ::-webkit-scrollbar-track { background: #f0f0f6; }
+  [data-theme="light"] ::-webkit-scrollbar-thumb { background: #c8c8d8; }
+
+  /* Transition for smooth switch */
+  *, *::before, *::after {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  }
+  /* But don't slow down animations */
+  .particle, .cursor, .cursor-ring,
+  [class*="anim"], [class*="float"], [class*="spin"],
+  .skel { transition: none !important; }
+
+  /* ── Theme Toggle Button ─────────────────────────── */
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 6px 11px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    transition: border-color 0.2s, color 0.2s !important;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .theme-toggle-btn:hover { color: var(--accent); border-color: rgba(0,229,160,0.3); }
+  .tt-icons { display: flex; align-items: center; gap: 4px; font-size: 0.9rem; }
+  .tt-icon-sun, .tt-icon-moon { line-height: 1; transition: opacity 0.3s !important; }
+
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <a href="index.html" class="logo">AI<span>Data</span>Meter</a>
+  <a href="index.html" class="nav-back">← Back to Home</a>
+  <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="tt-icons"><span class="tt-icon-sun">☀</span><span class="tt-icon-moon">🌙</span></span></button>
+</nav>
+
+<div class="page-wrap">
+  <!-- LEFT: Visual panel -->
+  <div class="visual-panel">
+    <div class="visual-eyebrow">Secure Access</div>
+    <h2>Your data.<br>Your <em>rights</em>.<br>Your evidence.</h2>
+    <p>Log in to access your real-time packet audit dashboard, review anomaly events, and manage your active dispute cases.</p>
+
+    <div class="mini-terminal">
+      <div class="mt-bar">
+        <div class="mt-dot" style="background:#ff5f56"></div>
+        <div class="mt-dot" style="background:#ffbd2e"></div>
+        <div class="mt-dot" style="background:#27c93f"></div>
+      </div>
+      <div class="mt-body">
+        <div class="mt-line"><span class="mt-green">✓</span> <span class="mt-muted">Packet-Sentry: active</span></div>
+        <div class="mt-line"><span class="mt-green">✓</span> <span class="mt-muted">Aura-Brain: monitoring</span></div>
+        <div class="mt-line"><span class="mt-orange">⚠</span> <span class="mt-muted">3 anomaly events flagged</span></div>
+        <div class="mt-line"><span class="mt-purple">▸</span> <span class="mt-muted">Variance: 38.01% detected</span></div>
+        <div class="mt-line"><span class="mt-green">▸</span> <span class="mt-muted">Dispute-Forge: ready</span> <span class="blink"></span></div>
+      </div>
+    </div>
+
+    <div class="stat-pills">
+      <div class="stat-pill"><span>32</span>Tests Passing</div>
+      <div class="stat-pill"><span>AES-256</span>Encrypted</div>
+      <div class="stat-pill"><span>NCC</span>Compliant</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Form panel -->
+  <div class="form-panel">
+    <div class="form-header">
+      <span class="tag">// Account Access</span>
+      <h1>Welcome<br>back.</h1>
+      <p>Enter your credentials to access your AI Data Meter audit dashboard.</p>
+    </div>
+
+    <div class="msg" id="msg"></div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div class="form-input-wrap">
+          <input type="email" class="form-input" id="email" placeholder="you@example.ng" autocomplete="email" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="form-input-wrap input-wrap">
+          <input type="password" class="form-input" id="password" placeholder="••••••••••" autocomplete="current-password" required>
+          <button type="button" class="input-icon" onclick="togglePassword()" id="eyeBtn">show</button>
+        </div>
+      </div>
+
+      <div class="form-options">
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="remember">
+          <div class="custom-cb"></div>
+          <span class="cb-label">Remember me</span>
+        </label>
+        <a href="forgot-password.html" class="forgot-link">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        Access Dashboard →
+      </button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <div class="form-footer">
+      Don't have an account? <a href="register.html">Create one free →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+  });
+  (function animRing() {
+    rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  })();
+  document.querySelectorAll('a, button, input, label').forEach(el => {
+    el.addEventListener('mouseenter', () => { ring.style.width = '50px'; ring.style.height = '50px'; });
+    el.addEventListener('mouseleave', () => { ring.style.width = '36px'; ring.style.height = '36px'; });
+  });
+
+  // Toggle password
+  function togglePassword() {
+    const pw = document.getElementById('password');
+    const btn = document.getElementById('eyeBtn');
+    if (pw.type === 'password') { pw.type = 'text'; btn.textContent = 'hide'; }
+    else { pw.type = 'password'; btn.textContent = 'show'; }
+  }
+
+  // Show message
+  function showMsg(text, type) {
+    const el = document.getElementById('msg');
+    el.textContent = text; el.className = 'msg ' + type;
+  }
+
+  // Login handler
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+    btn.textContent = 'Authenticating...';
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('AI Data Meter_token', data.data.access_token);
+        localStorage.setItem('AI Data Meter_refresh', data.data.refresh_token);
+        localStorage.setItem('AI Data Meter_user', JSON.stringify(data.data.user));
+        showMsg('Login successful! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+      } else {
+        showMsg(data.error || 'Invalid email or password', 'error');
+        btn.classList.remove('loading'); btn.textContent = 'Access Dashboard →';
+      }
+    } catch(err) {
+      showMsg('Connection error. Is the backend running?', 'error');
+      btn.classList.remove('loading'); btn.textContent = 'Access Dashboard →';
+    }
+  }
+</script>
+
+<script>
+// ── AiTelDa Theme System ─────────────────────────────────────────────
+(function() {
+  var saved = localStorage.getItem('aitelda-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var cur = html.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('aitelda-theme', next);
+  // Update any toggle buttons on page
+  document.querySelectorAll('.theme-toggle-btn').forEach(function(btn) {
+    btn.title = next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  });
+}
+
+// Apply saved theme immediately (also handles no-flash on load)
+(function() {
+  var saved = localStorage.getItem('aitelda-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+</script>
+
+</body>
+</html>

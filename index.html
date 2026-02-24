@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<script>document.documentElement.setAttribute("data-theme", localStorage.getItem("aitelda-theme")||"dark");</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Data Meter — AI-Native Equivalent of Prepaid Meter for Data Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050508;
+    --surface: #0c0c14;
+    --border: #1a1a2e;
+    --accent: #00e5a0;
+    --accent2: #ff4d00;
+    --accent3: #7b61ff;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --card: #0f0f1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s, width 0.2s, height 0.2s, background 0.2s;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid rgba(0,229,160,0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease-out, width 0.3s, height 0.3s, border-color 0.3s;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9997;
+    opacity: 0.5;
+  }
+
+  /* Grid background */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ---- NAV ---- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    background: rgba(5,5,8,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  .nav-cta {
+    background: var(--accent);
+    color: #000;
+    padding: 10px 22px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    transition: background 0.2s, transform 0.2s;
+  }
+  .nav-cta:hover { background: #00ffa8; transform: translateY(-1px); }
+
+  /* ---- HERO ---- */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 140px 48px 80px;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.2s forwards;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3.5rem, 8vw, 7.5rem);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    max-width: 900px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.35s forwards;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--accent);
+  }
+
+  .hero-sub {
+    margin-top: 32px;
+    max-width: 520px;
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.5s forwards;
+  }
+
+  .hero-actions {
+    margin-top: 48px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.65s forwards;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    padding: 16px 36px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    transition: all 0.2s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: #00ffa8; transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,229,160,0.3); }
+
+  .btn-ghost {
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+  /* Hero stats */
+  .hero-stats {
+    position: absolute;
+    right: 48px;
+    bottom: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    opacity: 0;
+    animation: fadeLeft 0.8s ease 0.8s forwards;
+  }
+
+  .stat-item {
+    text-align: right;
+    border-right: 2px solid var(--accent);
+    padding-right: 20px;
+  }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+  }
+
+  /* Floating formula */
+  .formula-badge {
+    position: absolute;
+    right: 200px;
+    top: 45%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px 28px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    animation: float 4s ease-in-out infinite;
+    opacity: 0;
+    animation: float 4s ease-in-out infinite, fadeUp 1s ease 1s forwards;
+  }
+
+  .formula-badge .label {
+    font-size: 0.6rem;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* ---- TICKER ---- */
+  .ticker-wrap {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+    padding: 14px 0;
+  }
+  .ticker {
+    display: flex;
+    gap: 0;
+    animation: ticker 25s linear infinite;
+    white-space: nowrap;
+  }
+  .ticker-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0 48px;
+    flex-shrink: 0;
+  }
+  .ticker-item span { color: var(--accent); margin-right: 8px; }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ---- SECTION COMMONS ---- */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 100px 48px;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .section-label::before {
+    content: '';
+    width: 20px; height: 1px;
+    background: var(--accent);
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  /* ---- HOW IT WORKS ---- */
+  #how {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    margin-top: 64px;
+    align-items: start;
+  }
+
+  .how-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 24px;
+    padding: 32px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: default;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .step:first-child { border-top: 1px solid var(--border); }
+  .step:hover .step-icon { border-color: var(--accent); color: var(--accent); }
+
+  .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    min-width: 28px;
+    padding-top: 4px;
+  }
+
+  .step-icon {
+    width: 44px; height: 44px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--muted);
+    flex-shrink: 0;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .step-content h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .step-content p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  /* Terminal visualizer */
+  .terminal {
+    background: #040408;
+    border: 1px solid var(--border);
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    overflow: hidden;
+    position: sticky;
+    top: 100px;
+  }
+
+  .terminal-bar {
+    background: var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .t-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .t-dot:nth-child(1) { background: #ff5f56; }
+  .t-dot:nth-child(2) { background: #ffbd2e; }
+  .t-dot:nth-child(3) { background: #27c93f; }
+  .t-title {
+    color: var(--muted);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .terminal-body {
+    padding: 24px;
+    min-height: 380px;
+  }
+
+  .t-line {
+    margin-bottom: 8px;
+    opacity: 0;
+    animation: termType 0.3s ease forwards;
+  }
+  .t-line:nth-child(1) { animation-delay: 0.5s; }
+  .t-line:nth-child(2) { animation-delay: 1.0s; }
+  .t-line:nth-child(3) { animation-delay: 1.5s; }
+  .t-line:nth-child(4) { animation-delay: 2.0s; }
+  .t-line:nth-child(5) { animation-delay: 2.5s; }
+  .t-line:nth-child(6) { animation-delay: 3.0s; }
+  .t-line:nth-child(7) { animation-delay: 3.5s; }
+  .t-line:nth-child(8) { animation-delay: 4.0s; }
+  .t-line:nth-child(9) { animation-delay: 4.5s; }
+  .t-line:nth-child(10) { animation-delay: 5.0s; }
+  .t-line:nth-child(11) { animation-delay: 5.5s; }
+  .t-line:nth-child(12) { animation-delay: 6.0s; }
+
+  @keyframes termType { to { opacity: 1; } }
+
+  .t-prompt { color: var(--accent); }
+  .t-cmd { color: var(--text); }
+  .t-out { color: var(--muted); }
+  .t-warn { color: #ffbd2e; }
+  .t-err { color: var(--accent2); }
+  .t-ok { color: #27c93f; }
+  .t-val { color: var(--accent3); }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---- FEATURES ---- */
+  #features {
+    padding-top: 120px;
+  }
+
+  .features-intro {
+    max-width: 600px;
+    margin-bottom: 80px;
+  }
+
+  .features-intro p {
+    color: var(--muted);
+    margin-top: 20px;
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+  }
+
+  .feat-card {
+    background: var(--card);
+    padding: 40px 32px;
+    transition: background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feat-card:hover { background: #12121f; }
+  .feat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+  .feat-card:hover::after { transform: scaleX(1); }
+
+  .feat-icon {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    display: block;
+    filter: grayscale(1);
+    transition: filter 0.3s;
+  }
+  .feat-card:hover .feat-icon { filter: grayscale(0); }
+
+  .feat-num {
+    position: absolute;
+    top: 20px; right: 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--border);
+    letter-spacing: 0.1em;
+  }
+
+  .feat-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .feat-card p {
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+
+  .feat-tag {
+    display: inline-block;
+    margin-top: 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* ---- BILLING VARIANCE ---- */
+  #variance {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .variance-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    margin-top: 64px;
+    align-items: center;
+  }
+
+  .formula-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 48px;
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+  }
+
+  .formula-main {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.6rem;
+    color: var(--accent);
+    margin: 24px 0;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+
+  .formula-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .legend-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+  }
+  .legend-key {
+    color: var(--accent);
+    min-width: 60px;
+  }
+  .legend-val { color: var(--muted); line-height: 1.5; }
+
+  .threshold-badge {
+    margin-top: 24px;
+    padding: 14px 20px;
+    background: rgba(255,77,0,0.08);
+    border: 1px solid rgba(255,77,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent2);
+  }
+  .threshold-badge::before {
+    content: '⚠';
+    font-size: 1rem;
+  }
+
+  .variance-content h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  .variance-content p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .check-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .check-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .check-list li::before {
+    content: '→';
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  /* ---- COMPLIANCE ---- */
+  #compliance {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .compliance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    margin-top: 64px;
+    align-items: start;
+  }
+
+  .compliance-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .pill:hover { border-color: var(--accent); transform: translateX(4px); }
+
+  .pill-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+  .pill h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .pill p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .compliance-right p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .ncc-badge {
+    margin-top: 32px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 20px 24px;
+    background: rgba(0,229,160,0.05);
+    border: 1px solid rgba(0,229,160,0.2);
+  }
+
+  .ncc-badge .badge-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+  }
+  .ncc-badge .badge-sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ---- CTA ---- */
+  #cta {
+    padding: 140px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #cta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0,229,160,0.06), transparent);
+    pointer-events: none;
+  }
+
+  .cta-glow {
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,229,160,0.08), transparent 70%);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  #cta h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    position: relative;
+    max-width: 700px;
+    margin: 0 auto 24px;
+  }
+  #cta h2 em { font-style: normal; color: var(--accent); }
+
+  #cta p {
+    color: var(--muted);
+    max-width: 480px;
+    margin: 0 auto 48px;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  /* ---- FOOTER ---- */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 40px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+  .footer-logo span { color: var(--accent); }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+  }
+  .footer-links a {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--accent); }
+
+  .footer-copy {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeLeft {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Intersection observer reveals */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    .hero { padding: 120px 20px 60px; }
+    .hero-stats { display: none; }
+    .formula-badge { display: none; }
+    section { padding: 60px 20px; }
+    .how-grid, .variance-layout, .compliance-grid { grid-template-columns: 1fr; gap: 40px; }
+    .features-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 20px; text-align: center; }
+    #cta { padding: 80px 20px; }
+  }
+
+  /* ═══════════════════════════════════════════════
+     LIGHT MODE — AiTelDa
+     Inverts all surface, background, text, and border
+     variables while preserving brand accent colours.
+  ═══════════════════════════════════════════════ */
+  [data-theme="light"] {
+    --bg:      #f4f4f8;
+    --surface: #ffffff;
+    --border:  #d8d8e8;
+    --text:    #0e0e18;
+    --muted:   #6b6b80;
+    --card:    #ffffff;
+    /* accent colours remain unchanged */
+    --accent:  #00c785;
+    --accent2: #ff4d00;
+    --accent3: #6d50f0;
+  }
+
+  /* Light-mode specific overrides */
+  [data-theme="light"] body {
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* Grid lines — subtler on light */
+  [data-theme="light"] body::after {
+    background-image:
+      linear-gradient(rgba(0,199,133,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,199,133,0.08) 1px, transparent 1px);
+  }
+
+  /* Nav glass */
+  [data-theme="light"] nav,
+  [data-theme="light"] .sidebar {
+    background: rgba(244,244,248,0.94) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Cards / surfaces */
+  [data-theme="light"] .card,
+  [data-theme="light"] .stat-card,
+  [data-theme="light"] .widget,
+  [data-theme="light"] .section-card,
+  [data-theme="light"] .comp-card,
+  [data-theme="light"] .feature-card,
+  [data-theme="light"] .tool-card,
+  [data-theme="light"] .val-card,
+  [data-theme="light"] .mission-point,
+  [data-theme="light"] .faq-item,
+  [data-theme="light"] .contact-card,
+  [data-theme="light"] .article-card,
+  [data-theme="light"] .diag-card,
+  [data-theme="light"] .diag-section,
+  [data-theme="light"] .err-terminal,
+  [data-theme="light"] .mini-terminal,
+  [data-theme="light"] .terminal,
+  [data-theme="light"] .code-block,
+  [data-theme="light"] .formula-box,
+  [data-theme="light"] .side-card,
+  [data-theme="light"] .qa,
+  [data-theme="light"] .ks-widget,
+  [data-theme="light"] .compare-col,
+  [data-theme="light"] .step-block,
+  [data-theme="light"] .bill-col,
+  [data-theme="light"] .pdf-card,
+  [data-theme="light"] .ncc-rights,
+  [data-theme="light"] .pipeline-step,
+  [data-theme="light"] .pipe-content,
+  [data-theme="light"] .meter-col,
+  [data-theme="light"] .anom-item,
+  [data-theme="light"] .blocked-item {
+    background: var(--card) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Input fields */
+  [data-theme="light"] input,
+  [data-theme="light"] textarea,
+  [data-theme="light"] select,
+  [data-theme="light"] .input-wrap input {
+    background: #f0f0f6 !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+  }
+  [data-theme="light"] input::placeholder,
+  [data-theme="light"] textarea::placeholder {
+    color: #9999aa !important;
+  }
+  [data-theme="light"] input:focus,
+  [data-theme="light"] textarea:focus {
+    border-color: var(--accent) !important;
+    background: #ffffff !important;
+  }
+
+  /* Sidebar */
+  [data-theme="light"] .sidebar {
+    background: #ffffff !important;
+    border-color: var(--border) !important;
+  }
+  [data-theme="light"] .sidebar-logo {
+    border-color: var(--border) !important;
+  }
+  [data-theme="light"] .nav-item:hover {
+    background: rgba(0,199,133,0.06) !important;
+  }
+  [data-theme="light"] .nav-item.active {
+    background: rgba(0,199,133,0.1) !important;
+  }
+
+  /* Top bars */
+  [data-theme="light"] .topbar,
+  [data-theme="light"] .ks-bar,
+  [data-theme="light"] .status-bar,
+  [data-theme="light"] .chapter-nav,
+  [data-theme="light"] .ch-nav,
+  [data-theme="light"] .tab-nav {
+    background: rgba(244,244,248,0.97) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Muted text stays readable */
+  [data-theme="light"] .muted,
+  [data-theme="light"] [class*="muted"] { color: #6b6b80 !important; }
+
+  /* Skeleton loader */
+  [data-theme="light"] .skel {
+    background: linear-gradient(90deg,#e0e0ee 25%,#eeeef8 50%,#e0e0ee 75%);
+    background-size: 200% 100%;
+  }
+
+  /* Toggle widget itself */
+  [data-theme="light"] .theme-toggle-btn { border-color: var(--border); }
+  [data-theme="light"] .theme-toggle-btn .tt-track { background: #e0e0ee; }
+  [data-theme="light"] .theme-toggle-btn .tt-icon-sun { opacity: 1; }
+  [data-theme="light"] .theme-toggle-btn .tt-icon-moon { opacity: 0.35; }
+
+  /* Dark mode toggle defaults */
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-moon { opacity: 1; }
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-sun  { opacity: 0.35; }
+
+  /* Noise overlay lighter in light mode */
+  [data-theme="light"] body::before { opacity: 0.15; }
+
+  /* Visual panels on auth pages */
+  [data-theme="light"] .visual-panel {
+    background: linear-gradient(135deg, #0e1a2e 0%, #0a1220 100%) !important;
+  }
+
+  /* Blog filter bar */
+  [data-theme="light"] .blog-filters,
+  [data-theme="light"] .breaking-banner {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Modals */
+  [data-theme="light"] .modal-overlay { background: rgba(244,244,248,0.92) !important; }
+  [data-theme="light"] .modal-panel { background: #ffffff !important; border-color: var(--border) !important; }
+
+  /* Tables */
+  [data-theme="light"] .dtable th { border-color: var(--border) !important; }
+  [data-theme="light"] .dtable td { border-color: #ebebf5 !important; }
+  [data-theme="light"] .dtable tr:hover td { background: rgba(0,199,133,0.03) !important; }
+
+  /* Scrollbars */
+  [data-theme="light"] ::-webkit-scrollbar-track { background: #f0f0f6; }
+  [data-theme="light"] ::-webkit-scrollbar-thumb { background: #c8c8d8; }
+
+  /* Transition for smooth switch */
+  *, *::before, *::after {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  }
+  /* But don't slow down animations */
+  .particle, .cursor, .cursor-ring,
+  [class*="anim"], [class*="float"], [class*="spin"],
+  .skel { transition: none !important; }
+
+  /* ── Theme Toggle Button ─────────────────────────── */
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 6px 11px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    transition: border-color 0.2s, color 0.2s !important;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .theme-toggle-btn:hover { color: var(--accent); border-color: rgba(0,229,160,0.3); }
+  .tt-icons { display: flex; align-items: center; gap: 4px; font-size: 0.9rem; }
+  .tt-icon-sun, .tt-icon-moon { line-height: 1; transition: opacity 0.3s !important; }
+/* ══════════════════════════════════════
+     WAITLIST SECTION
+  ══════════════════════════════════════ */
+  #waitlist {
+    padding: 100px 48px;
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .wl-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .wl-label::before { content: ''; width: 32px; height: 1px; background: var(--accent); }
+  #waitlist h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    margin-bottom: 14px;
+  }
+  #waitlist h2 em { font-style: normal; color: var(--accent); }
+  .wl-sub {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.65;
+    max-width: 540px;
+    margin-bottom: 44px;
+  }
+  /* Counter pill */
+  .wl-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,229,160,0.06);
+    border: 1px solid rgba(0,229,160,0.2);
+    padding: 8px 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    margin-bottom: 36px;
+  }
+  .wl-counter-dot {
+    width: 7px; height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+  /* Form grid */
+  .wl-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 680px;
+  }
+  .wl-field { display: flex; flex-direction: column; gap: 7px; }
+  .wl-field.full { grid-column: 1 / -1; }
+  .wl-label-sm {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .wl-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 13px 16px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    width: 100%;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  }
+  .wl-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,160,.08); }
+  .wl-input::placeholder { color: var(--muted); }
+  .wl-input.err { border-color: var(--accent2) !important; }
+
+  /* Device toggle */
+  .device-toggle { display: flex; gap: 10px; }
+  .dev-btn {
+    flex: 1;
+    padding: 11px 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.66rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all .2s;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+  }
+  .dev-btn.active {
+    background: rgba(0,229,160,.1);
+    border-color: rgba(0,229,160,.4);
+    color: var(--accent);
+  }
+  .dev-btn:hover:not(.active) { border-color: rgba(0,229,160,.2); color: var(--text); }
+
+  /* Updates checkbox */
+  .wl-check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    grid-column: 1 / -1;
+  }
+  .wl-checkbox {
+    width: 17px; height: 17px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .wl-check-label {
+    font-size: 0.86rem;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  /* Submit */
+  .wl-submit {
+    grid-column: 1 / -1;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 15px 36px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    transition: background .2s, transform .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+  }
+  .wl-submit:hover:not(:disabled) { background: #00ffa8; transform: translateY(-2px); }
+  .wl-submit:disabled { opacity: .6; cursor: not-allowed; transform: none !important; }
+  .wl-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Error / success messages */
+  .wl-msg {
+    grid-column: 1 / -1;
+    padding: 13px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.6;
+    display: none;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  }
+  .wl-msg.success {
+    display: block;
+    background: rgba(0,229,160,.07);
+    border: 1px solid rgba(0,229,160,.25);
+    color: var(--accent);
+  }
+  .wl-msg.error {
+    display: block;
+    background: rgba(255,77,0,.07);
+    border: 1px solid rgba(255,77,0,.25);
+    color: var(--accent2);
+  }
+
+  /* Social proof strip */
+  .wl-proof {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .wl-avatars { display: flex; }
+  .wl-av {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+    margin-left: -8px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #000;
+    flex-shrink: 0;
+  }
+  .wl-av:first-child { margin-left: 0; }
+  .wl-proof-text {
+    font-size: 0.84rem;
+    color: var(--muted);
+  }
+  .wl-proof-text strong { color: var(--text); }
+
+  /* Section divider */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 48px;
+  }
+
+  /* Light mode waitlist */
+  [data-theme="light"] .wl-input { background: #f0f0f6; }
+  [data-theme="light"] .dev-btn { background: #f0f0f6; }
+
+  @media (max-width: 768px) {
+    #waitlist { padding: 70px 20px; }
+    .wl-form { grid-template-columns: 1fr; }
+    .wl-field.full { grid-column: 1; }
+    .wl-check-row { grid-column: 1; }
+    .wl-submit { grid-column: 1; }
+    .wl-msg { grid-column: 1; }
+    .section-divider { margin: 0 20px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">AI<span>Data</span>Meter</div>
+  <ul class="nav-links">
+    <li><a href="how-it-works.html">How It Works</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="diagnostics.html">Diagnostic Tools</a></li>
+    <li><a href="help.html">Need Support?</a></li>
+    <li><a href="blog.html">Trend</a></li>
+  </ul>
+  <a href="register.html" class="nav-cta">Get Early Access</a>
+  <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="tt-icons"><span class="tt-icon-sun">☀</span><span class="tt-icon-moon">🌙</span></span></button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">AI-Native Equivalent of Prepaid Meter for Data Audit</div>
+  <h1>Your Telco<br>is <em>Stealing</em><br>Your Data?</h1>
+  <p class="hero-sub">AI Data Meter monitors every packet on your device, compares it against what your network provider reports, and files a formal dispute to NCC — automatically.</p>
+  <div class="hero-actions">
+    <a href="register.html" class="btn-primary">Start Auditing Free</a>
+    <a href="how-it-works.html" class="btn-ghost">See how it works →</a>
+  </div>
+
+  <div class="formula-badge">
+    <span class="label">Discrepancy Formula</span>
+    V = |D<sub>device</sub> − D<sub>telco</sub>|
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">30–40%</div>
+      <div class="stat-label">Hidden Consumption Blocked</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">5%</div>
+      <div class="stat-label">Variance Trigger Threshold</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">NCC</div>
+      <div class="stat-label">Automated Dispute Filing</div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <div class="ticker-item"><span>●</span> Packet-Sentry On-Device Monitoring</div>
+    <div class="ticker-item"><span>●</span> Aura-Brain Edge AI Anomaly Detection</div>
+    <div class="ticker-item"><span>●</span> Dispute-Forge Automated NCC Filing</div>
+    <div class="ticker-item"><span>●</span> AES-256 Local Encrypted Storage</div>
+    <div class="ticker-item"><span>●</span> Zero Packet Inspection · Metadata Only</div>
+    <div class="ticker-item"><span>●</span> On-Device AI Anomaly Detection</div>
+    <div class="ticker-item"><span>●</span> Battery-Optimized Edge Processing</div>
+    <div class="ticker-item"><span>●</span> Packet-Sentry On-Device Monitoring</div>
+    <div class="ticker-item"><span>●</span> Aura-Brain Edge AI Anomaly Detection</div>
+    <div class="ticker-item"><span>●</span> Dispute-Forge Automated NCC Filing</div>
+    <div class="ticker-item"><span>●</span> AES-256 Local Encrypted Storage</div>
+    <div class="ticker-item"><span>●</span> Zero Packet Inspection · Metadata Only</div>
+    <div class="ticker-item"><span>●</span> On-Device AI Anomaly Detection</div>
+    <div class="ticker-item"><span>●</span> Battery-Optimized Edge Processing</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-label">System Architecture</div>
+  <h2 class="section-title">Three layers.<br>One verdict.</h2>
+
+  <div class="how-grid">
+    <div class="how-steps">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <div class="step-icon">📡</div>
+        <div class="step-content">
+          <h3>Packet-Sentry Monitors</h3>
+          <p>A low-level on-device network agent silently records every byte transferred — per app, per session — across both Android and iOS, giving you a precise, real-time picture of your data usage.</p>
+        </div>
+      </div>
+      <div class="step reveal reveal-delay-1">
+        <div class="step-num">02</div>
+        <div class="step-icon">🧠</div>
+        <div class="step-content">
+          <h3>Aura-Brain Detects Anomalies</h3>
+          <p>Our on-device AI engine, trained on your app usage patterns (WhatsApp, TikTok, Gmail), flags unusual data consumption — especially during idle states when your screen is off.</p>
+        </div>
+      </div>
+      <div class="step reveal reveal-delay-2">
+        <div class="step-num">03</div>
+        <div class="step-icon">⚖️</div>
+        <div class="step-content">
+          <h3>Dispute-Forge Files Your Case</h3>
+          <p>When billing variance exceeds 5%, the system auto-generates a forensic PDF audit report and submits it directly to the NCC consumer portal on your behalf.</p>
+        </div>
+      </div>
+      <div class="step reveal reveal-delay-3">
+        <div class="step-num">04</div>
+        <div class="step-icon">🔒</div>
+        <div class="step-content">
+          <h3>Everything Stays On-Device</h3>
+          <p>No packet inspection. No data sent to servers. All audit logs are AES-256 encrypted and stored in your device's secure enclave.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal -->
+    <div class="terminal reveal reveal-delay-1">
+      <div class="terminal-bar">
+        <div class="t-dot"></div>
+        <div class="t-dot"></div>
+        <div class="t-dot"></div>
+        <div class="t-title">AI Data Meter — packet-sentry v1.0</div>
+      </div>
+      <div class="terminal-body">
+        <div class="t-line"><span class="t-prompt">$</span> <span class="t-cmd">sentry --start --uid=com.whatsapp</span></div>
+        <div class="t-line"><span class="t-out">▸ Baseline loaded: 7-day avg = 142.3 MB/day</span></div>
+        <div class="t-line"><span class="t-out">▸ Idle mode: ACTIVE · Screen: OFF</span></div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line"><span class="t-warn">⚠ Anomaly detected at 02:14:33</span></div>
+        <div class="t-line"><span class="t-out">  UID: com.tiktok.musically</span></div>
+        <div class="t-line"><span class="t-out">  Bytes transmitted: 38.4 MB</span></div>
+        <div class="t-line"><span class="t-out">  Expected (idle): 2.1 MB</span></div>
+        <div class="t-line"><span class="t-err">  Deviation: +1728% · FLAGGED</span></div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line"><span class="t-out">▸ Billing variance V = |D_device - D_telco|</span></div>
+        <div class="t-line"><span class="t-ok">✓ V = 41.2 MB → Threshold exceeded (>5%)</span></div>
+        <div class="t-line"><span class="t-val">▸ Dispute-Forge: Generating forensic report…</span></div>
+        <div class="t-line"><span class="t-ok">✓ NCC submission queued · Ref: AIT-2026-0091</span></div>
+        <div class="t-line"><span class="t-prompt">$</span> <span class="cursor-blink"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="features-intro">
+    <div class="section-label">Functional Specifications</div>
+    <h2 class="section-title reveal">What AI Data Meter does for you</h2>
+    <p class="reveal reveal-delay-1">A complete toolkit for reclaiming control of your mobile data — from real-time monitoring to automated legal advocacy.</p>
+  </div>
+
+  <div class="features-grid">
+    <div class="feat-card reveal">
+      <span class="feat-num">F-01</span>
+      <span class="feat-icon">🛡️</span>
+      <h3>Kill-Switch Firewall</h3>
+      <p>When your screen goes off, AI Data Meter automatically blocks all non-essential apps from consuming background data. You define the whitelist (WhatsApp, Gmail). We block everything else.</p>
+      <span class="feat-tag">30–40% data savings</span>
+    </div>
+    <div class="feat-card reveal reveal-delay-1">
+      <span class="feat-num">F-02</span>
+      <span class="feat-icon">🤖</span>
+      <h3>Aura-Brain AI Engine</h3>
+      <p>Our proprietary on-device AI engine is trained specifically on your app usage patterns. Zero cloud dependency. Zero additional data cost. Your intelligence stays local.</p>
+      <span class="feat-tag">Edge AI · No cloud</span>
+    </div>
+    <div class="feat-card reveal reveal-delay-2">
+      <span class="feat-num">F-03</span>
+      <span class="feat-icon">⚖️</span>
+      <h3>Automated Data Lawyer</h3>
+      <p>When over-billing is detected, Dispute-Forge auto-generates a formal PDF forensic audit with legal citations from NCC General Consumer Code §5.3 and submits it directly.</p>
+      <span class="feat-tag">NCC §5.3 Compliant</span>
+    </div>
+    <div class="feat-card reveal">
+      <span class="feat-num">F-04</span>
+      <span class="feat-icon">📊</span>
+      <h3>Per-App Usage Breakdown</h3>
+      <p>Track exactly how much data every app uses — foreground and background — and compare it against what your network provider claims you consumed that session.</p>
+      <span class="feat-tag">Android & iOS</span>
+    </div>
+    <div class="feat-card reveal reveal-delay-1">
+      <span class="feat-num">F-05</span>
+      <span class="feat-icon">🔐</span>
+      <h3>Encrypted Audit Logs</h3>
+      <p>Every session log is encrypted with AES-256 and stored in your device's secure enclave. We track metadata only — destination IP, packet size, UID. Never your content.</p>
+      <span class="feat-tag">AES-256 · Secure Enclave</span>
+    </div>
+    <div class="feat-card reveal reveal-delay-2">
+      <span class="feat-num">F-06</span>
+      <span class="feat-icon">📈</span>
+      <h3>Usage History & Trends</h3>
+      <p>Track your data usage over time, see which apps are consuming the most, and spot patterns that reveal whether your provider's billing has been consistent and accurate.</p>
+      <span class="feat-tag">30-day history</span>
+    </div>
+  </div>
+</section>
+
+<!-- BILLING VARIANCE -->
+<section id="variance">
+  <div class="section-label">The Discrepancy Algorithm</div>
+  <div class="variance-layout">
+    <div class="formula-block reveal">
+      <div style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;">Billing Variance Calculation</div>
+      <div class="formula-main">V = |D<sub style="font-size:0.7em">device</sub> − D<sub style="font-size:0.7em">telco</sub>|</div>
+      <div class="formula-legend">
+        <div class="legend-item">
+          <span class="legend-key">V</span>
+          <span class="legend-val">Billing Variance — the discrepancy between reality and what you're charged</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-key">D<sub>device</sub></span>
+          <span class="legend-val">Total bytes recorded by AI Data Meter via system socket logs on your device</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-key">D<sub>telco</sub></span>
+          <span class="legend-val">Usage reported by your network provider via USSD or SMS deduction alerts</span>
+        </div>
+      </div>
+      <div class="threshold-badge">
+        If V &gt; 5% → Suspected Over-billing Event Flagged
+      </div>
+    </div>
+
+    <div class="variance-content reveal reveal-delay-1">
+      <h2 class="section-title" style="font-size:2rem;margin-bottom:16px;">Why your telco<br>and your phone<br>disagree.</h2>
+      <p>Network providers measure data at the tower. Your device measures it at the socket. The gap between these two measurement points — protocol overhead, rounding, phantom charges — is where your money disappears.</p>
+      <p>AI Data Meter's Discrepancy Algorithm continuously reconciles both data sources. When the variance exceeds 5%, we don't just alert you — we build your case automatically.</p>
+      <ul class="check-list">
+        <li>7-day personal baseline per app, not a global average</li>
+        <li>Anomaly trigger: &gt;25% deviation from baseline during idle states</li>
+        <li>USSD and SMS parsing to capture telco-reported deductions</li>
+        <li>Time-window reconciliation to account for billing cycle offsets</li>
+        <li>Full forensic PDF generated with device ID, timestamps, and legal citations</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- COMPLIANCE -->
+<section id="compliance">
+  <div class="section-label">Compliance & Security</div>
+  <div class="compliance-grid">
+    <div class="compliance-pills">
+      <h2 class="section-title reveal" style="font-size:2rem;margin-bottom:32px;">Built to protect<br>your privacy first.</h2>
+      <div class="pill reveal reveal-delay-1">
+        <div class="pill-icon">🚫</div>
+        <div>
+          <h4>No Packet Inspection</h4>
+          <p>We track only metadata: destination IP, packet size, and UID. The content of your messages, calls, and browsing is never read, logged, or transmitted.</p>
+        </div>
+      </div>
+      <div class="pill reveal reveal-delay-2">
+        <div class="pill-icon">🔒</div>
+        <div>
+          <h4>AES-256 Local Storage</h4>
+          <p>All audit logs are encrypted and stored exclusively in your device's secure enclave. Nothing leaves your phone without your explicit action.</p>
+        </div>
+      </div>
+      <div class="pill reveal reveal-delay-3">
+        <div class="pill-icon">⚡</div>
+        <div>
+          <h4>Battery-Optimized Edge AI</h4>
+          <p>Inference runs entirely on your device. No cloud round-trips. No background data costs for the auditing process itself — so monitoring never eats into the data it's protecting.</p>
+        </div>
+      </div>
+      <div class="pill reveal reveal-delay-4">
+        <div class="pill-icon">🛡️</div>
+        <div>
+          <h4>Local VPN Architecture</h4>
+          <p>The Kill-Switch Firewall intercepts background packets locally without routing any traffic to a remote server. Your data never leaves your device.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="compliance-right reveal reveal-delay-2">
+      <div class="section-label" style="margin-bottom:24px;">NCC Compliance</div>
+      <h3>Your legal rights,<br>automated.</h3>
+      <br>
+      <p>Under the NCC General Consumer Code of Practice, Section 5.3, Nigerian consumers have the right to accurate billing and formal dispute resolution. Most people never exercise this right because the process is complex and time-consuming.</p>
+      <p>AI Data Meter's Dispute-Forge changes that. Every forensic audit report includes the legal citation, device evidence, and timestamped usage breakdown required for a valid NCC dispute — generated in seconds, filed automatically.</p>
+      <p>AI Data Meter is actively working with the NCC to enable direct API submission of dispute reports, so your case goes straight to the right desk without you lifting a finger.</p>
+      <div class="ncc-badge">
+        <div style="font-size:2rem;">🏛️</div>
+        <div>
+          <div class="badge-text">NCC General Consumer Code of Practice</div>
+          <div class="badge-sub">Section 5.3 · Accurate Billing & Dispute Rights · Automated Citation</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EARLY ACCESS WAITLIST -->
+<section id="waitlist">
+  <div class="wl-label">Early Access</div>
+  <h2>Be first in line<br>when we <em>launch</em>.</h2>
+  <p class="wl-sub">AI Data Meter is in final development. Register your interest now and we'll notify you the moment the Android app is ready — before the public launch.</p>
+
+  <div class="wl-counter">
+    <div class="wl-counter-dot"></div>
+    <span id="wlCount">Loading registrations...</span>
+  </div>
+
+  <form class="wl-form" id="wlForm" onsubmit="submitWaitlist(event)">
+
+    <div class="wl-field">
+      <label class="wl-label-sm" for="wlName">Full Name *</label>
+      <input class="wl-input" id="wlName" name="full_name" type="text"
+             placeholder="Ihuoma Okonkwo" autocomplete="name" required>
+    </div>
+
+    <div class="wl-field">
+      <label class="wl-label-sm" for="wlEmail">Email Address *</label>
+      <input class="wl-input" id="wlEmail" name="email" type="email"
+             placeholder="amaka@example.com" autocomplete="email" required>
+    </div>
+
+    <div class="wl-field">
+      <label class="wl-label-sm" for="wlPhone">Phone Number</label>
+      <input class="wl-input" id="wlPhone" name="phone" type="tel"
+             placeholder="+234 801 234 5678" autocomplete="tel">
+    </div>
+
+    <div class="wl-field">
+      <label class="wl-label-sm">Device Type</label>
+      <div class="device-toggle">
+        <button type="button" class="dev-btn active" data-device="android" onclick="selectDevice(this)">📱 Android</button>
+        <button type="button" class="dev-btn" data-device="ios" onclick="selectDevice(this)">🍎 iOS</button>
+        <button type="button" class="dev-btn" data-device="both" onclick="selectDevice(this)">Both</button>
+      </div>
+    </div>
+
+    <div class="wl-check-row">
+      <input class="wl-checkbox" id="wlUpdates" type="checkbox" checked>
+      <label class="wl-check-label" for="wlUpdates">
+        Notify me about AI Data Meter updates, telco news, and launch announcements
+      </label>
+    </div>
+
+    <div class="wl-msg" id="wlMsg"></div>
+
+    <button class="wl-submit" id="wlSubmit" type="submit">
+      <div class="wl-spinner" id="wlSpinner"></div>
+      <span id="wlBtnText">Reserve My Spot →</span>
+    </button>
+
+  </form>
+
+  <div class="wl-proof">
+    <div class="wl-avatars">
+      <div class="wl-av" style="background:#00e5a0">AO</div>
+      <div class="wl-av" style="background:#7b61ff">KA</div>
+      <div class="wl-av" style="background:#ff4d00">NE</div>
+      <div class="wl-av" style="background:#ffbd2e">TJ</div>
+      <div class="wl-av" style="background:#27c93f">BM</div>
+    </div>
+    <div class="wl-proof-text">
+      <strong id="wlProofCount">Join them</strong> — others already registered.<br>
+      No spam. Unsubscribe at any time.
+    </div>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Ai<span>Data</span>Meter</div>
+  <ul class="footer-links">
+    <li><a href="how-it-works.html">How It Works</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="diagnostics.html">Diagnostic Tools</a></li>
+    <li><a href="help.html">Need Support?</a></li>
+    <li><a href="blog.html">Trend</a></li>
+  </ul>
+  <div class="footer-copy">© 2026 AI Data Meter · Made with Love by JIKENTA</div>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+
+  function animateRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.width = '20px';
+      cursor.style.height = '20px';
+      ring.style.width = '56px';
+      ring.style.height = '56px';
+      ring.style.borderColor = 'rgba(0,229,160,0.6)';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.width = '10px';
+      cursor.style.height = '10px';
+      ring.style.width = '36px';
+      ring.style.height = '36px';
+      ring.style.borderColor = 'rgba(0,229,160,0.4)';
+    });
+  });
+
+  // Intersection observer for reveals
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Animated counter for stats
+  function animateCounter(el, target, suffix = '') {
+    let start = 0;
+    const duration = 1500;
+    const step = timestamp => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const value = Math.floor(progress * target);
+      el.textContent = value + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // Nav smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+</script>
+
+<script>
+// ── AiTelDa Theme System ─────────────────────────────────────────────
+(function() {
+  var saved = localStorage.getItem('aitelda-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var cur = html.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('aitelda-theme', next);
+  // Update any toggle buttons on page
+  document.querySelectorAll('.theme-toggle-btn').forEach(function(btn) {
+    btn.title = next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  });
+}
+
+// Apply saved theme immediately (also handles no-flash on load)
+(function() {
+  var saved = localStorage.getItem('aitelda-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+</script>
+<script>
+// ── AI Data Meter Theme System ─────────────────────────────────────────────
+(function() {
+  var saved = localStorage.getItem('AI Data Meter-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var cur = html.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('AI Data Meter-theme', next);
+  // Update any toggle buttons on page
+  document.querySelectorAll('.theme-toggle-btn').forEach(function(btn) {
+    btn.title = next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  });
+}
+
+// Apply saved theme immediately (also handles no-flash on load)
+(function() {
+  var saved = localStorage.getItem('AI Data Meter-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+
+// ── Waitlist ─────────────────────────────────────────────────────────
+const API_BASE = 'http://localhost:5000'; // Change to your hosted URL
+let selectedDevice = 'android';
+
+function selectDevice(btn) {
+  document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedDevice = btn.dataset.device;
+}
+
+async function loadWaitlistStats() {
+  try {
+    const r = await fetch(API_BASE + '/api/waitlist/stats');
+    if (!r.ok) return;
+    const d = await r.json();
+    const total = d.data?.total_registrants || 0;
+    if (total > 0) {
+      document.getElementById('wlCount').textContent =
+        total.toLocaleString() + ' people already registered';
+      document.getElementById('wlProofCount').textContent =
+        total.toLocaleString() + ' people';
+    } else {
+      document.getElementById('wlCount').textContent = 'Be among the first to register';
+      document.getElementById('wlProofCount').textContent = 'Be among the first';
+    }
+  } catch(e) {
+    document.getElementById('wlCount').textContent = 'Registrations open now';
+  }
+}
+
+async function submitWaitlist(e) {
+  e.preventDefault();
+  const msg    = document.getElementById('wlMsg');
+  const btn    = document.getElementById('wlSubmit');
+  const spinner = document.getElementById('wlSpinner');
+  const btnTxt = document.getElementById('wlBtnText');
+
+  // Clear previous state
+  msg.className = 'wl-msg';
+  msg.textContent = '';
+  document.querySelectorAll('.wl-input').forEach(i => i.classList.remove('err'));
+
+  const name  = document.getElementById('wlName').value.trim();
+  const email = document.getElementById('wlEmail').value.trim();
+  const phone = document.getElementById('wlPhone').value.trim();
+
+  // Client validation
+  if (!name || name.length < 2) {
+    document.getElementById('wlName').classList.add('err');
+    showWlMsg('Please enter your full name.', 'error'); return;
+  }
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    document.getElementById('wlEmail').classList.add('err');
+    showWlMsg('Please enter a valid email address.', 'error'); return;
+  }
+
+  // Loading state
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnTxt.textContent = 'Reserving...';
+
+  try {
+    const payload = {
+      full_name:    name,
+      email:        email,
+      phone:        phone || undefined,
+      device_type:  selectedDevice,
+      wants_updates: document.getElementById('wlUpdates').checked,
+      utm_source:   new URLSearchParams(location.search).get('utm_source') || undefined,
+      utm_medium:   new URLSearchParams(location.search).get('utm_medium') || undefined,
+      utm_campaign: new URLSearchParams(location.search).get('utm_campaign') || undefined,
+    };
+
+    const r = await fetch(API_BASE + '/api/waitlist/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+
+    if (r.ok && d.success) {
+      const pos = d.data?.position;
+      const firstName = name.split(' ')[0];
+      if (d.data?.already_registered) {
+        showWlMsg(
+          `✓ You're already on the list, ${firstName}! We'll reach you at ${email} when we launch.`,
+          'success'
+        );
+      } else {
+        showWlMsg(
+          `✓ You're #${pos?.toLocaleString() || '?'} in the queue, ${firstName}! We'll email ${email} the moment AI Data Meter is ready.`,
+          'success'
+        );
+        document.getElementById('wlForm').reset();
+        selectedDevice = 'android';
+        document.querySelectorAll('.dev-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+        loadWaitlistStats();
+      }
+      btnTxt.textContent = '✓ You're on the list';
+    } else {
+      showWlMsg(d.error || 'Something went wrong. Please try again.', 'error');
+      btnTxt.textContent = 'Reserve My Spot →';
+      btn.disabled = false;
+    }
+  } catch(err) {
+    showWlMsg('Network error — check your connection and try again.', 'error');
+    btnTxt.textContent = 'Reserve My Spot →';
+    btn.disabled = false;
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+function showWlMsg(text, type) {
+  const msg = document.getElementById('wlMsg');
+  msg.textContent = text;
+  msg.className = 'wl-msg ' + type;
+}
+
+// Load stats on page load
+loadWaitlistStats();
+
+</script>
+</body>
+</html>

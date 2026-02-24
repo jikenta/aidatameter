@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<script>document.documentElement.setAttribute("data-theme", localStorage.getItem("aitelda-theme")||"dark");</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnostic Suite — AI Data Meter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050508;--surface:#0c0c14;--border:#1a1a2e;--accent:#00e5a0;--accent2:#ff4d00;--accent3:#7b61ff;--text:#e8e8f0;--muted:#6b6b80;--card:#0f0f1a;--yellow:#ffbd2e;--green:#27c93f;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;cursor:none;min-height:100vh;}
+.cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .15s,height .15s;}
+.cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(0,229,160,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s;}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.018) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:rgba(5,5,8,.94);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.02em;color:var(--text);text-decoration:none;}
+.logo span{color:var(--accent);}
+.nav-links{display:flex;gap:26px;list-style:none;}
+.nav-links a{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--muted);text-decoration:none;text-transform:uppercase;letter-spacing:.08em;transition:color .2s;}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);}
+.nav-cta{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted);text-decoration:none;text-transform:uppercase;letter-spacing:.08em;transition:color .2s;border:1px solid var(--border);padding:7px 14px;}
+.nav-cta:hover{color:var(--accent);border-color:rgba(0,229,160,.3);}
+
+/* HERO */
+.page-hero{padding:120px 60px 48px;position:relative;z-index:1;border-bottom:1px solid var(--border);overflow:hidden;}
+.page-hero::before{content:'';position:absolute;top:-120px;right:-60px;width:700px;height:700px;background:radial-gradient(circle,rgba(255,77,0,.05) 0%,rgba(123,97,255,.04) 40%,transparent 70%);pointer-events:none;}
+.page-hero::after{display:none;}
+.hero-tag{font-family:'Space Mono',monospace;font-size:.63rem;color:var(--accent2);letter-spacing:.22em;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.hero-tag::before{content:'';width:22px;height:1px;background:var(--accent2);}
+.page-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.6rem,5vw,4.6rem);font-weight:800;letter-spacing:-.04em;line-height:.9;margin-bottom:18px;}
+.page-hero h1 em{font-style:normal;color:transparent;-webkit-text-stroke:1.5px var(--accent);}
+.page-hero p{color:var(--muted);font-size:1rem;line-height:1.75;max-width:540px;margin-bottom:28px;}
+.hero-stats{display:flex;gap:0;border:1px solid var(--border);width:fit-content;}
+.hs{padding:16px 28px;border-right:1px solid var(--border);text-align:center;}
+.hs:last-child{border-right:none;}
+.hs-val{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;line-height:1;}
+.hs-lbl{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:4px;}
+
+/* GLOBAL STATUS BAR */
+.status-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 60px;display:flex;align-items:center;gap:20px;position:sticky;top:62px;z-index:90;flex-wrap:wrap;}
+.sb-item{display:flex;align-items:center;gap:7px;font-family:'Space Mono',monospace;font-size:.62rem;}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sb-dot.ok{background:var(--accent);box-shadow:0 0 7px rgba(0,229,160,.5);animation:pulse-dot 2s ease-in-out infinite;}
+.sb-dot.warn{background:var(--yellow);}
+.sb-dot.idle{background:var(--muted);}
+.sb-dot.running{background:var(--accent3);animation:pulse-dot 1s ease-in-out infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.4;}}
+.sb-sep{width:1px;height:24px;background:var(--border);}
+.sb-right{margin-left:auto;display:flex;gap:8px;}
+.run-all-btn{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--accent);background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);padding:7px 16px;cursor:pointer;text-transform:uppercase;letter-spacing:.08em;transition:all .2s;}
+.run-all-btn:hover{background:rgba(0,229,160,.14);}
+.export-btn{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);background:none;border:1px solid var(--border);padding:7px 16px;cursor:pointer;text-transform:uppercase;letter-spacing:.08em;transition:all .2s;}
+.export-btn:hover{color:var(--accent);border-color:rgba(0,229,160,.25);}
+
+/* LAYOUT */
+.diag-layout{display:grid;grid-template-columns:220px 1fr;gap:0;min-height:calc(100vh - 160px);}
+.diag-sidenav{border-right:1px solid var(--border);background:var(--surface);padding:24px 0;position:sticky;top:110px;height:calc(100vh - 110px);overflow-y:auto;}
+.dsn-label{font-family:'Space Mono',monospace;font-size:.54rem;color:var(--muted);text-transform:uppercase;letter-spacing:.18em;padding:10px 22px 5px;}
+.dsn-item{display:flex;align-items:center;gap:10px;padding:10px 22px;font-size:.84rem;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all .2s;}
+.dsn-item:hover{background:rgba(0,229,160,.04);color:var(--text);}
+.dsn-item.active{background:rgba(0,229,160,.07);color:var(--text);border-left-color:var(--accent);}
+.dsn-icon{width:18px;text-align:center;flex-shrink:0;font-size:.9rem;}
+.dsn-status{margin-left:auto;width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dsn-status.ok{background:var(--accent);}
+.dsn-status.warn{background:var(--yellow);}
+.dsn-status.idle{background:var(--border);}
+.dsn-status.danger{background:var(--accent2);animation:pulse-dot 1.5s ease-in-out infinite;}
+.diag-content{padding:36px 44px;position:relative;z-index:1;}
+
+/* SECTION HEADERS */
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:20px;flex-wrap:wrap;}
+.sh-left{}
+.sh-tag{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--accent3);text-transform:uppercase;letter-spacing:.18em;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.sh-tag::before{content:'';width:16px;height:1px;background:var(--accent3);}
+.sh-title{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-bottom:6px;}
+.sh-desc{color:var(--muted);font-size:.88rem;line-height:1.65;max-width:520px;}
+
+/* TOOL CARDS */
+.tool-card{background:var(--card);border:1px solid var(--border);margin-bottom:20px;position:relative;overflow:hidden;transition:border-color .2s;}
+.tool-card:hover{border-color:rgba(0,229,160,.15);}
+.tool-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.tc-green::before{background:var(--accent);}
+.tc-red::before{background:var(--accent2);}
+.tc-purple::before{background:var(--accent3);}
+.tc-yellow::before{background:var(--yellow);}
+.tc-blue::before{background:#2196f3;}
+.tc-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.tc-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+.tc-name{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:3px;}
+.tc-sub{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.tc-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.tc-toggle{position:relative;width:48px;height:26px;cursor:pointer;flex-shrink:0;}
+.tc-toggle input{display:none;}
+.tc-track{width:100%;height:100%;background:var(--border);border-radius:13px;transition:background .3s;position:relative;}
+.tc-toggle input:checked~.tc-track{background:var(--accent);box-shadow:0 0 14px rgba(0,229,160,.3);}
+.tc-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .3s;box-shadow:0 2px 5px rgba(0,0,0,.3);}
+.tc-toggle input:checked~.tc-track .tc-thumb{transform:translateX(22px);}
+.run-btn{font-family:'Space Mono',monospace;font-size:.62rem;padding:7px 16px;border:1px solid rgba(0,229,160,.25);background:rgba(0,229,160,.06);color:var(--accent);cursor:pointer;text-transform:uppercase;letter-spacing:.06em;transition:all .2s;white-space:nowrap;}
+.run-btn:hover{background:rgba(0,229,160,.12);}
+.run-btn:disabled{opacity:.4;cursor:default;}
+.tc-body{padding:22px 24px;}
+.tc-status-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.tc-stat-pill{font-family:'Space Mono',monospace;font-size:.62rem;padding:5px 12px;border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;gap:6px;}
+.tc-stat-pill.ok{border-color:rgba(0,229,160,.25);color:var(--accent);background:rgba(0,229,160,.05);}
+.tc-stat-pill.warn{border-color:rgba(255,189,46,.25);color:var(--yellow);}
+.tc-stat-pill.danger{border-color:rgba(255,77,0,.3);color:var(--accent2);background:rgba(255,77,0,.06);}
+.tc-stat-pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+/* SCAN RESULTS TABLE */
+.results-table{width:100%;border-collapse:collapse;font-size:.84rem;}
+.results-table th{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;text-align:left;padding:0 12px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.results-table td{padding:11px 12px;border-bottom:1px solid rgba(26,26,46,.6);vertical-align:middle;}
+.results-table tr:last-child td{border-bottom:none;}
+.results-table tr:hover td{background:rgba(0,229,160,.018);}
+.app-cell{display:flex;align-items:center;gap:10px;}
+.app-ico-sm{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.app-name-sm{font-size:.84rem;font-weight:500;}
+.app-pkg-sm{font-family:'Space Mono',monospace;font-size:.54rem;color:var(--muted);}
+.risk-badge{font-family:'Space Mono',monospace;font-size:.56rem;padding:3px 8px;letter-spacing:.06em;text-transform:uppercase;}
+.risk-badge.critical{background:rgba(255,77,0,.14);color:var(--accent2);border:1px solid rgba(255,77,0,.3);}
+.risk-badge.high{background:rgba(255,189,46,.1);color:var(--yellow);border:1px solid rgba(255,189,46,.25);}
+.risk-badge.medium{background:rgba(123,97,255,.1);color:var(--accent3);border:1px solid rgba(123,97,255,.25);}
+.risk-badge.safe{background:rgba(0,229,160,.08);color:var(--accent);border:1px solid rgba(0,229,160,.2);}
+.quarantine-btn{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--accent2);background:rgba(255,77,0,.08);border:1px solid rgba(255,77,0,.25);padding:4px 9px;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.quarantine-btn:hover{background:rgba(255,77,0,.16);}
+.quarantine-btn.quarantined{background:rgba(255,77,0,.2);color:var(--muted);border-color:var(--border);cursor:default;}
+.quarantine-btn.quarantined::before{content:'🔒 ';}
+
+/* TERMINAL / LOG */
+.terminal{background:#020204;border:1px solid var(--border);font-family:'Space Mono',monospace;font-size:.7rem;padding:0;margin-top:16px;max-height:220px;overflow-y:auto;position:relative;}
+.terminal-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:7px 14px;display:flex;align-items:center;gap:8px;}
+.t-dot{width:9px;height:9px;border-radius:50%;}
+.t-dot.r{background:#ff5f56;}
+.t-dot.y{background:#ffbd2e;}
+.t-dot.g{background:#27c93f;}
+.terminal-title{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-left:4px;}
+.terminal-body{padding:12px 16px;}
+.tl{padding:2px 0;line-height:1.6;}
+.tl.ok{color:var(--accent);}
+.tl.err{color:var(--accent2);}
+.tl.info{color:#6b6b80;}
+.tl.warn{color:var(--yellow);}
+.tl.cmd{color:var(--accent3);}
+.tl.white{color:var(--text);}
+.tl.threat{color:var(--accent2);background:rgba(255,77,0,.08);padding:3px 8px;border-left:2px solid var(--accent2);}
+.tl.blocked{color:var(--accent);background:rgba(0,229,160,.05);padding:3px 8px;border-left:2px solid var(--accent);}
+.tl-cursor{display:inline-block;width:8px;height:13px;background:var(--accent);animation:blink-cursor .8s ease-in-out infinite;vertical-align:middle;margin-left:2px;}
+@keyframes blink-cursor{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* TRACKER BLOCKER */
+.tracker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.tracker-pill{background:var(--surface);border:1px solid var(--border);padding:8px 10px;font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:6px;transition:all .2s;}
+.tracker-pill.blocked{border-color:rgba(0,229,160,.2);color:var(--accent);background:rgba(0,229,160,.04);}
+.tracker-pill.blocked::after{content:'✓';font-size:.6rem;}
+.tracker-pill.danger{border-color:rgba(255,77,0,.25);color:var(--accent2);}
+.dns-meter{background:var(--surface);border:1px solid var(--border);padding:16px 20px;margin-top:14px;}
+.dns-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-family:'Space Mono',monospace;font-size:.65rem;}
+.dns-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:14px;}
+.dns-fill{height:100%;border-radius:3px;transition:width 1.4s ease;}
+.dns-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.dns-stat{text-align:center;}
+.dns-stat .v{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;line-height:1;}
+.dns-stat .l{font-family:'Space Mono',monospace;font-size:.54rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
+
+/* RISK SCORE GAUGE */
+.risk-score-wrap{display:flex;gap:20px;margin-bottom:18px;flex-wrap:wrap;}
+.rs-card{background:var(--surface);border:1px solid var(--border);padding:18px 20px;flex:1;min-width:180px;}
+.rs-app{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.rs-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.rs-name{font-size:.88rem;font-weight:600;}
+.rs-score-val{font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:800;line-height:1;margin-bottom:4px;}
+.rs-score-lbl{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.rs-bar-wrap{margin-top:10px;}
+.rs-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px;}
+.rs-fill{height:100%;border-radius:3px;transition:width 1.4s ease;}
+.rs-perms{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.rs-perm{font-family:'Space Mono',monospace;font-size:.54rem;padding:2px 7px;border:1px solid var(--border);color:var(--muted);}
+.rs-perm.danger{border-color:rgba(255,77,0,.3);color:var(--accent2);}
+.rs-verdict{font-family:'Space Mono',monospace;font-size:.62rem;margin-top:10px;padding:8px 12px;border-left:2px solid;}
+.rs-verdict.danger{border-color:var(--accent2);background:rgba(255,77,0,.06);color:var(--accent2);}
+.rs-verdict.warn{border-color:var(--yellow);background:rgba(255,189,46,.06);color:var(--yellow);}
+.rs-verdict.ok{border-color:var(--accent);background:rgba(0,229,160,.06);color:var(--accent);}
+.uninstall-btn{width:100%;margin-top:10px;font-family:'Space Mono',monospace;font-size:.6rem;color:var(--accent2);background:rgba(255,77,0,.06);border:1px solid rgba(255,77,0,.25);padding:7px;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;transition:all .2s;}
+.uninstall-btn:hover{background:rgba(255,77,0,.14);}
+
+/* UPDATE GUARDIAN */
+.ug-panel{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+.ug-card{background:var(--surface);border:1px solid var(--border);padding:18px;}
+.ug-app-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(26,26,46,.6);}
+.ug-app-row:last-child{border-bottom:none;}
+.ug-app-ico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.ug-app-info{flex:1;min-width:0;}
+.ug-app-name{font-size:.84rem;font-weight:500;}
+.ug-app-size{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);}
+.ug-status{font-family:'Space Mono',monospace;font-size:.58rem;padding:3px 8px;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;}
+.ug-status.held{background:rgba(255,189,46,.1);color:var(--yellow);border:1px solid rgba(255,189,46,.25);}
+.ug-status.wifi{background:rgba(0,229,160,.08);color:var(--accent);border:1px solid rgba(0,229,160,.2);}
+.ug-status.blocked{background:rgba(255,77,0,.08);color:var(--accent2);border:1px solid rgba(255,77,0,.25);}
+.ug-approve{background:none;border:1px solid var(--border);font-family:'Space Mono',monospace;font-size:.54rem;color:var(--muted);padding:3px 7px;cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.ug-approve:hover{color:var(--accent);border-color:rgba(0,229,160,.3);}
+
+/* VIDEO GOVERNOR */
+.vg-app{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(26,26,46,.6);}
+.vg-app:last-child{border-bottom:none;}
+.vg-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.vg-info{flex:1;min-width:0;}
+.vg-name{font-size:.86rem;font-weight:500;margin-bottom:4px;}
+.vg-qual-row{display:flex;align-items:center;gap:10px;}
+.qual-label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);min-width:60px;}
+.qual-options{display:flex;gap:4px;}
+.qual-opt{font-family:'Space Mono',monospace;font-size:.58rem;padding:3px 8px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .2s;}
+.qual-opt.active{border-color:rgba(0,229,160,.3);color:var(--accent);background:rgba(0,229,160,.07);}
+.qual-opt.cap{border-color:rgba(123,97,255,.3);color:var(--accent3);background:rgba(123,97,255,.07);}
+.vg-saving{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--accent);margin-left:auto;text-align:right;white-space:nowrap;}
+
+/* PHISHING SHIELD */
+.shield-live{background:var(--surface);border:1px solid var(--border);padding:18px 22px;margin-bottom:16px;}
+.shield-live-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.shield-indicator{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px rgba(0,229,160,.5);animation:pulse-dot 2s ease-in-out infinite;}
+.shield-events{display:flex;flex-direction:column;gap:0;}
+.shield-event{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid rgba(26,26,46,.6);}
+.shield-event:last-child{border-bottom:none;}
+.se-type{font-family:'Space Mono',monospace;font-size:.56rem;padding:2px 7px;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;margin-top:1px;}
+.se-type.blocked{background:rgba(255,77,0,.1);color:var(--accent2);border:1px solid rgba(255,77,0,.25);}
+.se-type.safe{background:rgba(0,229,160,.08);color:var(--accent);border:1px solid rgba(0,229,160,.2);}
+.se-type.warn{background:rgba(255,189,46,.1);color:var(--yellow);border:1px solid rgba(255,189,46,.25);}
+.se-domain{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.se-reason{font-size:.78rem;color:var(--muted);}
+.se-time{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);margin-left:auto;flex-shrink:0;}
+.url-test{display:flex;gap:0;margin-top:16px;}
+.url-input{flex:1;background:var(--card);border:1px solid var(--border);border-right:none;color:var(--text);font-family:'Space Mono',monospace;font-size:.72rem;padding:10px 14px;outline:none;transition:border-color .2s;}
+.url-input:focus{border-color:var(--accent);}
+.url-input::placeholder{color:var(--muted);}
+.url-check-btn{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;background:var(--accent);color:#000;border:none;padding:10px 18px;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;transition:background .2s;white-space:nowrap;}
+.url-check-btn:hover{background:#00ffa8;}
+.url-result{margin-top:10px;font-family:'Space Mono',monospace;font-size:.68rem;padding:10px 14px;display:none;}
+.url-result.safe{background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.2);color:var(--accent);}
+.url-result.danger{background:rgba(255,77,0,.08);border:1px solid rgba(255,77,0,.3);color:var(--accent2);}
+.url-result.warn{background:rgba(255,189,46,.08);border:1px solid rgba(255,189,46,.25);color:var(--yellow);}
+
+/* SAVINGS SUMMARY WIDGET */
+.savings-widget{background:var(--card);border:1px solid var(--border);padding:22px 24px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;}
+.sw-stat{text-align:center;padding:0 16px;border-right:1px solid var(--border);}
+.sw-stat:last-child{border-right:none;}
+.sw-val{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;line-height:1;}
+.sw-lbl{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-top:5px;}
+
+/* PROGRESS BAR (scan) */
+.scan-progress{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:14px;display:none;}
+.sp-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3));border-radius:2px;transition:width .3s ease;width:0%;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);padding:12px 18px;font-family:'Space Mono',monospace;font-size:.68rem;z-index:9000;transform:translateY(70px);opacity:0;transition:all .35s cubic-bezier(.22,.68,0,1.21);max-width:300px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:rgba(0,229,160,.3);color:var(--accent);}
+.toast.warn{border-color:rgba(255,77,0,.3);color:var(--accent2);}
+.toast.info{border-color:rgba(123,97,255,.3);color:var(--accent3);}
+
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .55s ease;}
+.reveal.visible{opacity:1;transform:none;}
+.section-divider{border:none;border-top:1px solid var(--border);margin:32px 0;}
+
+@media(max-width:1024px){.diag-layout{grid-template-columns:1fr;}.diag-sidenav{display:none;}.ug-panel{grid-template-columns:1fr;}.tracker-grid{grid-template-columns:1fr 1fr;}.savings-widget{grid-template-columns:1fr 1fr;}.risk-score-wrap{flex-direction:column;}}
+@media(max-width:768px){nav{padding:14px 20px;}.nav-links{display:none;}.page-hero{padding:108px 20px 36px;}.status-bar{padding:10px 20px;}.diag-content{padding:20px;}.results-table{font-size:.76rem;}}
+
+  /* ═══════════════════════════════════════════════
+     LIGHT MODE — AiTelDa
+     Inverts all surface, background, text, and border
+     variables while preserving brand accent colours.
+  ═══════════════════════════════════════════════ */
+  [data-theme="light"] {
+    --bg:      #f4f4f8;
+    --surface: #ffffff;
+    --border:  #d8d8e8;
+    --text:    #0e0e18;
+    --muted:   #6b6b80;
+    --card:    #ffffff;
+    /* accent colours remain unchanged */
+    --accent:  #00c785;
+    --accent2: #ff4d00;
+    --accent3: #6d50f0;
+  }
+
+  /* Light-mode specific overrides */
+  [data-theme="light"] body {
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* Grid lines — subtler on light */
+  [data-theme="light"] body::after {
+    background-image:
+      linear-gradient(rgba(0,199,133,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,199,133,0.08) 1px, transparent 1px);
+  }
+
+  /* Nav glass */
+  [data-theme="light"] nav,
+  [data-theme="light"] .sidebar {
+    background: rgba(244,244,248,0.94) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Cards / surfaces */
+  [data-theme="light"] .card,
+  [data-theme="light"] .stat-card,
+  [data-theme="light"] .widget,
+  [data-theme="light"] .section-card,
+  [data-theme="light"] .comp-card,
+  [data-theme="light"] .feature-card,
+  [data-theme="light"] .tool-card,
+  [data-theme="light"] .val-card,
+  [data-theme="light"] .mission-point,
+  [data-theme="light"] .faq-item,
+  [data-theme="light"] .contact-card,
+  [data-theme="light"] .article-card,
+  [data-theme="light"] .diag-card,
+  [data-theme="light"] .diag-section,
+  [data-theme="light"] .err-terminal,
+  [data-theme="light"] .mini-terminal,
+  [data-theme="light"] .terminal,
+  [data-theme="light"] .code-block,
+  [data-theme="light"] .formula-box,
+  [data-theme="light"] .side-card,
+  [data-theme="light"] .qa,
+  [data-theme="light"] .ks-widget,
+  [data-theme="light"] .compare-col,
+  [data-theme="light"] .step-block,
+  [data-theme="light"] .bill-col,
+  [data-theme="light"] .pdf-card,
+  [data-theme="light"] .ncc-rights,
+  [data-theme="light"] .pipeline-step,
+  [data-theme="light"] .pipe-content,
+  [data-theme="light"] .meter-col,
+  [data-theme="light"] .anom-item,
+  [data-theme="light"] .blocked-item {
+    background: var(--card) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Input fields */
+  [data-theme="light"] input,
+  [data-theme="light"] textarea,
+  [data-theme="light"] select,
+  [data-theme="light"] .input-wrap input {
+    background: #f0f0f6 !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+  }
+  [data-theme="light"] input::placeholder,
+  [data-theme="light"] textarea::placeholder {
+    color: #9999aa !important;
+  }
+  [data-theme="light"] input:focus,
+  [data-theme="light"] textarea:focus {
+    border-color: var(--accent) !important;
+    background: #ffffff !important;
+  }
+
+  /* Sidebar */
+  [data-theme="light"] .sidebar {
+    background: #ffffff !important;
+    border-color: var(--border) !important;
+  }
+  [data-theme="light"] .sidebar-logo {
+    border-color: var(--border) !important;
+  }
+  [data-theme="light"] .nav-item:hover {
+    background: rgba(0,199,133,0.06) !important;
+  }
+  [data-theme="light"] .nav-item.active {
+    background: rgba(0,199,133,0.1) !important;
+  }
+
+  /* Top bars */
+  [data-theme="light"] .topbar,
+  [data-theme="light"] .ks-bar,
+  [data-theme="light"] .status-bar,
+  [data-theme="light"] .chapter-nav,
+  [data-theme="light"] .ch-nav,
+  [data-theme="light"] .tab-nav {
+    background: rgba(244,244,248,0.97) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Muted text stays readable */
+  [data-theme="light"] .muted,
+  [data-theme="light"] [class*="muted"] { color: #6b6b80 !important; }
+
+  /* Skeleton loader */
+  [data-theme="light"] .skel {
+    background: linear-gradient(90deg,#e0e0ee 25%,#eeeef8 50%,#e0e0ee 75%);
+    background-size: 200% 100%;
+  }
+
+  /* Toggle widget itself */
+  [data-theme="light"] .theme-toggle-btn { border-color: var(--border); }
+  [data-theme="light"] .theme-toggle-btn .tt-track { background: #e0e0ee; }
+  [data-theme="light"] .theme-toggle-btn .tt-icon-sun { opacity: 1; }
+  [data-theme="light"] .theme-toggle-btn .tt-icon-moon { opacity: 0.35; }
+
+  /* Dark mode toggle defaults */
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-moon { opacity: 1; }
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-sun  { opacity: 0.35; }
+
+  /* Noise overlay lighter in light mode */
+  [data-theme="light"] body::before { opacity: 0.15; }
+
+  /* Visual panels on auth pages */
+  [data-theme="light"] .visual-panel {
+    background: linear-gradient(135deg, #0e1a2e 0%, #0a1220 100%) !important;
+  }
+
+  /* Blog filter bar */
+  [data-theme="light"] .blog-filters,
+  [data-theme="light"] .breaking-banner {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Modals */
+  [data-theme="light"] .modal-overlay { background: rgba(244,244,248,0.92) !important; }
+  [data-theme="light"] .modal-panel { background: #ffffff !important; border-color: var(--border) !important; }
+
+  /* Tables */
+  [data-theme="light"] .dtable th { border-color: var(--border) !important; }
+  [data-theme="light"] .dtable td { border-color: #ebebf5 !important; }
+  [data-theme="light"] .dtable tr:hover td { background: rgba(0,199,133,0.03) !important; }
+
+  /* Scrollbars */
+  [data-theme="light"] ::-webkit-scrollbar-track { background: #f0f0f6; }
+  [data-theme="light"] ::-webkit-scrollbar-thumb { background: #c8c8d8; }
+
+  /* Transition for smooth switch */
+  *, *::before, *::after {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  }
+  /* But don't slow down animations */
+  .particle, .cursor, .cursor-ring,
+  [class*="anim"], [class*="float"], [class*="spin"],
+  .skel { transition: none !important; }
+
+  /* ── Theme Toggle Button ─────────────────────────── */
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 6px 11px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    transition: border-color 0.2s, color 0.2s !important;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .theme-toggle-btn:hover { color: var(--accent); border-color: rgba(0,229,160,0.3); }
+  .tt-icons { display: flex; align-items: center; gap: 4px; font-size: 0.9rem; }
+  .tt-icon-sun, .tt-icon-moon { line-height: 1; transition: opacity 0.3s !important; }
+
+</style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">Ai<span>Tel</span>Da</a>
+  <ul class="nav-links">
+    <li><a href="how-it-works.html">How It Works</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="diagnostics.html">Diagnostic Tools</a></li>
+    <li><a href="help.html">Need Support?</a></li>
+    <li><a href="blog.html">Trend</a></li>
+  </ul>
+  <a href="dashboard2.html" class="nav-cta">← Dashboard</a>
+  <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="tt-icons"><span class="tt-icon-sun">☀</span><span class="tt-icon-moon">🌙</span></span></button>
+</nav>
+
+<!-- HERO -->
+<div class="page-hero">
+  <div class="hero-tag">Forensic Intelligence Suite · v2.1</div>
+  <h1>Diagnostic<br><em>Arsenal.</em></h1>
+  <p>Six deep-scan tools that identify, isolate, and neutralise every vector draining your data — from hidden adware to telco over-billing. No black boxes. Full evidence.</p>
+  <div class="hero-stats">
+    <div class="hs"><div class="hs-val" style="color:var(--accent)">₦180M</div><div class="hs-lbl">Saved in Jan 2026</div></div>
+    <div class="hs"><div class="hs-val" style="color:var(--accent2)">47.8 TB</div><div class="hs-lbl">Phantom blocked</div></div>
+    <div class="hs"><div class="hs-val" style="color:var(--accent3)">12,400+</div><div class="hs-lbl">Threats neutralised</div></div>
+    <div class="hs"><div class="hs-val" style="color:var(--yellow)">99.2%</div><div class="hs-lbl">Detection accuracy</div></div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="sb-item"><div class="sb-dot ok"></div><span>Packet-Sentry: Active</span></div>
+  <div class="sb-sep"></div>
+  <div class="sb-item"><div class="sb-dot ok"></div><span>DNS Blackhole: Blocking 47 trackers</span></div>
+  <div class="sb-sep"></div>
+  <div class="sb-item"><div class="sb-dot warn"></div><span id="sbMalwareStatus">Malware Scanner: 2 suspects flagged</span></div>
+  <div class="sb-sep"></div>
+  <div class="sb-item"><div class="sb-dot ok"></div><span>Phishing Shield: Active</span></div>
+  <div class="sb-sep"></div>
+  <div class="sb-item"><div class="sb-dot ok"></div><span>Update Guardian: 3 held</span></div>
+  <div class="sb-right">
+    <button class="run-all-btn" onclick="runAllScans()">▶▶ Run Full Scan</button>
+    <button class="export-btn" onclick="exportReport()">↓ Export Report</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="diag-layout">
+  <!-- SIDE NAV -->
+  <nav class="diag-sidenav">
+    <div class="dsn-label">Forensic Tools</div>
+    <div class="dsn-item active" onclick="scrollTo('malware')"><span class="dsn-icon">🦠</span>Malware Auditor<div class="dsn-status danger"></div></div>
+    <div class="dsn-item" onclick="scrollTo('tracker')"><span class="dsn-icon">👁️</span>Tracker Blocker<div class="dsn-status ok"></div></div>
+    <div class="dsn-item" onclick="scrollTo('phishing')"><span class="dsn-icon">🛡️</span>Phishing Shield<div class="dsn-status ok"></div></div>
+    <div class="dsn-label">Prevention</div>
+    <div class="dsn-item" onclick="scrollTo('update')"><span class="dsn-icon">🔒</span>Update Guardian<div class="dsn-status warn"></div></div>
+    <div class="dsn-item" onclick="scrollTo('video')"><span class="dsn-icon">📹</span>Video Governor<div class="dsn-status ok"></div></div>
+    <div class="dsn-item" onclick="scrollTo('zeroperm')"><span class="dsn-icon">🔍</span>Zero-Perm Audit<div class="dsn-status danger"></div></div>
+    <div class="dsn-label">Summary</div>
+    <div class="dsn-item" onclick="scrollTo('savings')"><span class="dsn-icon">💰</span>Savings Summary</div>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="diag-content">
+
+    <!-- ═══ SAVINGS SUMMARY ═══ -->
+    <div class="savings-widget reveal" id="savings">
+      <div class="sw-stat"><div class="sw-val" style="color:var(--accent)" id="swSaved">₦0</div><div class="sw-lbl">Saved This Month</div></div>
+      <div class="sw-stat"><div class="sw-val" style="color:var(--accent2)" id="swBlocked">0 MB</div><div class="sw-lbl">Data Blocked</div></div>
+      <div class="sw-stat"><div class="sw-val" style="color:var(--accent3)" id="swThreats">0</div><div class="sw-lbl">Threats Neutralised</div></div>
+      <div class="sw-stat"><div class="sw-val" style="color:var(--yellow)" id="swTrackers">0</div><div class="sw-lbl">Trackers Blocked</div></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         TOOL A: MALWARE / ADWARE SCANNER
+    ═══════════════════════════════════════ -->
+    <div id="malware" class="reveal">
+      <div class="section-head">
+        <div class="sh-left">
+          <div class="sh-tag">Tool A — Forensic Scanner</div>
+          <div class="sh-title">Behavioral Malware Auditor</div>
+          <div class="sh-desc">Detects hidden WebView adware and malicious background processes. Flags apps consuming data with zero screen time — the signature of adware, stalkerware, and data-harvesting spyware.</div>
+        </div>
+      </div>
+
+      <div class="tool-card tc-red">
+        <div class="tc-header">
+          <div class="tc-icon" style="background:rgba(255,77,0,.12)">🦠</div>
+          <div>
+            <div class="tc-name">Behavioral Malware Auditor</div>
+            <div class="tc-sub">Hidden WebView · Adware · Spyware Detection</div>
+          </div>
+          <div class="tc-actions">
+            <div class="tc-stat-pill danger"><div class="dot"></div>2 Suspects</div>
+            <label class="tc-toggle"><input type="checkbox" checked onchange="toggleTool('malware',this)"><div class="tc-track"><div class="tc-thumb"></div></div></label>
+            <button class="run-btn" id="malwareRunBtn" onclick="runMalwareScan()">▶ Scan Now</button>
+          </div>
+        </div>
+        <div class="tc-body">
+          <div class="tc-status-row">
+            <div class="tc-stat-pill"><div class="dot" style="background:var(--muted)"></div>Last scan: 14 min ago</div>
+            <div class="tc-stat-pill danger"><div class="dot"></div>High Data + Zero Screen: 2 apps</div>
+            <div class="tc-stat-pill ok"><div class="dot"></div>One-Tap Quarantine: Ready</div>
+          </div>
+          <div class="scan-progress" id="malwareProg"><div class="sp-fill" id="malwareProgFill"></div></div>
+          <table class="results-table" id="malwareTable">
+            <thead><tr><th>App</th><th>Screen Time</th><th>Background Data</th><th>Deviation</th><th>Risk</th><th>Action</th></tr></thead>
+            <tbody id="malwareTbody"></tbody>
+          </table>
+          <div class="terminal" id="malwareLog" style="display:none">
+            <div class="terminal-bar"><div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div><span class="terminal-title">Behavioral Malware Auditor — Log</span></div>
+            <div class="terminal-body" id="malwareLogBody"></div>
+          </div>
+          <div style="margin-top:14px;padding:12px 16px;background:rgba(255,77,0,.05);border:1px solid rgba(255,77,0,.12);font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);line-height:1.6;">
+            🔬 <strong style="color:var(--text)">Detection method:</strong> High Data + Zero Screen Time threshold. An app consuming ≥50MB while screen is off with no active notification session is classified as an Adware Suspect. Hidden WebView detection via network socket fingerprinting.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- ═══════════════════════════════════════
+         TOOL B: TRACKER & TELEMETRY BLOCKER
+    ═══════════════════════════════════════ -->
+    <div id="tracker" class="reveal">
+      <div class="section-head">
+        <div class="sh-left">
+          <div class="sh-tag">Tool B — DNS Blackhole Engine</div>
+          <div class="sh-title">Tracker &amp; Telemetry Blocker</div>
+          <div class="sh-desc">Intercepts DNS requests at the socket level before they leave your device. Blocks known tracking domains, analytics beacons, and telemetry servers — reducing page "weight" by up to 20% and extending your data bundle.</div>
+        </div>
+      </div>
+
+      <div class="tool-card tc-purple">
+        <div class="tc-header">
+          <div class="tc-icon" style="background:rgba(123,97,255,.12)">👁️</div>
+          <div>
+            <div class="tc-name">DNS Blackhole Engine</div>
+            <div class="tc-sub">Silent-Mode Firewall · 100,000+ domains blocked</div>
+          </div>
+          <div class="tc-actions">
+            <div class="tc-stat-pill ok"><div class="dot"></div>47 blocked today</div>
+            <label class="tc-toggle"><input type="checkbox" checked onchange="toggleTool('tracker',this)"><div class="tc-track"><div class="tc-thumb"></div></div></label>
+            <button class="run-btn" onclick="runTrackerScan()">▶ Scan Now</button>
+          </div>
+        </div>
+        <div class="tc-body">
+          <div class="tc-status-row">
+            <div class="tc-stat-pill ok"><div class="dot"></div>DNS Blackhole: Active</div>
+            <div class="tc-stat-pill ok"><div class="dot"></div>47 trackers blocked today</div>
+            <div class="tc-stat-pill"><div class="dot" style="background:var(--muted)"></div>~20% page weight reduction</div>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.1em;">Active Blocklists</div>
+          <div class="tracker-grid" id="trackerGrid"></div>
+          <div class="dns-meter">
+            <div class="dns-row"><span>DNS Requests Today</span><span style="color:var(--text)">1,247 total</span></div>
+            <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);margin-bottom:4px;"><span>Allowed: 1,200</span><span>Blocked: 47 (3.8%)</span></div>
+            <div class="dns-bar"><div class="dns-fill" id="dnsFill" style="width:0%;background:var(--accent)"></div></div>
+            <div class="dns-stats">
+              <div class="dns-stat"><div class="v" style="color:var(--accent)">47</div><div class="l">Trackers Blocked</div></div>
+              <div class="dns-stat"><div class="v" style="color:var(--accent3)">12.4 MB</div><div class="l">Data Saved</div></div>
+              <div class="dns-stat"><div class="v" style="color:var(--yellow)">4</div><div class="l">Blacklists Active</div></div>
+            </div>
+          </div>
+          <div class="terminal" id="trackerLog" style="margin-top:14px;display:none">
+            <div class="terminal-bar"><div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div><span class="terminal-title">DNS Blackhole Engine — Live Feed</span></div>
+            <div class="terminal-body" id="trackerLogBody"></div>
+          </div>
+          <div style="margin-top:14px;padding:12px 16px;background:rgba(123,97,255,.05);border:1px solid rgba(123,97,255,.12);font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);line-height:1.6;">
+            🔬 <strong style="color:var(--text)">How it works:</strong> AI Data Meter runs a local VPN tunnel. All DNS queries pass through it first. Queries matching our 100,000+ domain blacklist are silently dropped (NXDOMAIN) before ever leaving your device. No tracker ever receives a signal. No bytes spent.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- ═══════════════════════════════════════
+         TOOL C: PHISHING / MALICIOUS SITE SHIELD
+    ═══════════════════════════════════════ -->
+    <div id="phishing" class="reveal">
+      <div class="section-head">
+        <div class="sh-left">
+          <div class="sh-tag">Tool C — Real-Time Threat Intelligence</div>
+          <div class="sh-title">Phishing &amp; Fraud Interceptor</div>
+          <div class="sh-desc">Checks every URL you visit against Google Safe Browsing, Spamhaus, and AI Data Meter's own Nigerian fraud blacklist in real time. Kills the connection before the first megabyte of a drive-by download is spent.</div>
+        </div>
+      </div>
+
+      <div class="tool-card tc-green">
+        <div class="tc-header">
+          <div class="tc-icon" style="background:rgba(0,229,160,.1)">🛡️</div>
+          <div>
+            <div class="tc-name">Phishing &amp; Fraud Interceptor</div>
+            <div class="tc-sub">Google Safe Browsing · Spamhaus · AI Data Meter Blacklist</div>
+          </div>
+          <div class="tc-actions">
+            <div class="tc-stat-pill ok"><div class="dot"></div>3 blocked today</div>
+            <label class="tc-toggle"><input type="checkbox" checked onchange="toggleTool('phishing',this)"><div class="tc-track"><div class="tc-thumb"></div></div></label>
+          </div>
+        </div>
+        <div class="tc-body">
+          <div style="font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.1em;">Live Shield Events</div>
+          <div class="shield-live">
+            <div class="shield-live-header"><div class="shield-indicator"></div><span style="font-family:'Space Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;">Real-Time Intercept Log</span></div>
+            <div class="shield-events" id="shieldEvents"></div>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em;margin-top:16px;">Test a URL</div>
+          <div class="url-test">
+            <input class="url-input" type="text" id="urlInput" placeholder="https://example.ng — paste any URL to check safety">
+            <button class="url-check-btn" onclick="checkURL()">Check →</button>
+          </div>
+          <div class="url-result" id="urlResult"></div>
+          <div style="margin-top:14px;padding:12px 16px;background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.12);font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);line-height:1.6;">
+            🔬 <strong style="color:var(--text)">How it works:</strong> Every URL is checked against 3 blacklists before the first packet is sent. If flagged, AI Data Meter resets the TCP connection immediately — preventing even the HTTP handshake from completing. Drive-by downloads require a completed handshake. We cut it before then.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- ═══════════════════════════════════════
+         TOOL D: UPDATE GUARDIAN
+    ═══════════════════════════════════════ -->
+    <div id="update" class="reveal">
+      <div class="section-head">
+        <div class="sh-left">
+          <div class="sh-tag">Tool D — Intelligent Version Control</div>
+          <div class="sh-title">Update Guardian</div>
+          <div class="sh-desc">App and OS updates often fire automatically on mobile data — vanishing 2GB in minutes. The Update Guardian intercepts all update traffic and holds it until you're on Wi-Fi, or you manually authorise the "Naira Spend."</div>
+        </div>
+      </div>
+
+      <div class="tool-card tc-yellow">
+        <div class="tc-header">
+          <div class="tc-icon" style="background:rgba(255,189,46,.1)">🔒</div>
+          <div>
+            <div class="tc-name">Update Guardian</div>
+            <div class="tc-sub">Intelligent Update Delay · Wi-Fi-First Policy</div>
+          </div>
+          <div class="tc-actions">
+            <div class="tc-stat-pill warn"><div class="dot"></div>3 updates held</div>
+            <label class="tc-toggle"><input type="checkbox" checked onchange="toggleTool('update',this)"><div class="tc-track"><div class="tc-thumb"></div></div></label>
+          </div>
+        </div>
+        <div class="tc-body">
+          <div class="ug-panel" id="ugPanel"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button style="font-family:'Space Mono',monospace;font-size:.62rem;padding:8px 16px;border:1px solid rgba(0,229,160,.25);background:rgba(0,229,160,.06);color:var(--accent);cursor:pointer;text-transform:uppercase;letter-spacing:.06em;" onclick="allowAllWifi()">✓ Allow All on Wi-Fi</button>
+            <button style="font-family:'Space Mono',monospace;font-size:.62rem;padding:8px 16px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.06em;" onclick="blockAllUpdates()">🚫 Block All Mobile Data Updates</button>
+          </div>
+          <div style="margin-top:14px;padding:12px 16px;background:rgba(255,189,46,.04);border:1px solid rgba(255,189,46,.12);font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);line-height:1.6;">
+            🔬 <strong style="color:var(--text)">How it works:</strong> AI Data Meter monitors connections to Google Play, Apple App Store, and manufacturer OTA endpoints. When a download begins on a mobile data connection, the packet is held in queue. Automatic release triggers when AI Data Meter detects a Wi-Fi handshake with &gt;1Mbps throughput.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- ═══════════════════════════════════════
+         TOOL E: VIDEO RESOLUTION GOVERNOR
+    ═══════════════════════════════════════ -->
+    <div id="video" class="reveal">
+      <div class="section-head">
+        <div class="sh-left">
+          <div class="sh-tag">Tool E — Quality Capping Engine</div>
+          <div class="sh-title">Video Resolution Governor</div>
+          <div class="sh-desc">TikTok and Instagram Reels default to HD — consuming ~1GB per hour. The Governor uses a local VPN proxy to throttle video streams, serving 480p instead of 1080p. Up to 60% data savings with no meaningful quality loss on a 5–6" screen.</div>
+        </div>
+      </div>
+
+      <div class="tool-card tc-blue">
+        <div class="tc-header">
+          <div class="tc-icon" style="background:rgba(33,150,243,.1)">📹</div>
+          <div>
+            <div class="tc-name">Video Resolution Governor</div>
+            <div class="tc-sub">User-Agent Spoofing · Stream Throttle · Up to 60% savings</div>
+          </div>
+          <div class="tc-actions">
+            <div class="tc-stat-pill ok"><div class="dot"></div>Active · Saving 60%</div>
+            <label class="tc-toggle"><input type="checkbox" checked onchange="toggleTool('video',this)"><div class="tc-track"><div class="tc-thumb"></div></div></label>
+          </div>
+        </div>
+        <div class="tc-body">
+          <div class="tc-status-row">
+            <div class="tc-stat-pill ok"><div class="dot"></div>Video proxy: Active</div>
+            <div class="tc-stat-pill ok"><div class="dot"></div>Saved: 340 MB today</div>
+            <div class="tc-stat-pill"><div class="dot" style="background:var(--muted)"></div>3 apps governed</div>
+          </div>
+          <div id="videoApps"></div>
+          <div style="margin-top:14px;padding:12px 16px;background:rgba(33,150,243,.05);border:1px solid rgba(33,150,243,.15);font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);line-height:1.6;">
+            🔬 <strong style="color:var(--text)">How it works:</strong> AI Data Meter's local VPN proxy modifies the <code style="color:var(--accent3)">User-Agent</code> header and <code style="color:var(--accent3)">Accept</code> quality negotiation in video requests. TikTok and Instagram's CDNs respond by serving lower-resolution streams. Your viewing experience is virtually identical on a mobile screen; your data bill is 60% lighter.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- ═══════════════════════════════════════
+         TOOL F: ZERO-PERM AUDIT
+    ═══════════════════════════════════════ -->
+    <div id="zeroperm" class="reveal">
+      <div class="section-head">
+        <div class="sh-left">
+          <div class="sh-tag">Tool F — Privacy-to-Data Ratio AI</div>
+          <div class="sh-title">Zero-Perm Audit</div>
+          <div class="sh-desc">The AI calculates a Risk Score for every installed app based on data consumed vs. permissions requested vs. legitimate use case. A flashlight app using 200MB and accessing Location and Contacts scores CRITICAL. Uninstall recommended.</div>
+        </div>
+      </div>
+
+      <div class="tool-card tc-red">
+        <div class="tc-header">
+          <div class="tc-icon" style="background:rgba(255,77,0,.1)">🔍</div>
+          <div>
+            <div class="tc-name">Zero-Perm Audit</div>
+            <div class="tc-sub">Privacy-to-Data Ratio · AI Risk Scoring · Uninstall Advisor</div>
+          </div>
+          <div class="tc-actions">
+            <div class="tc-stat-pill danger"><div class="dot"></div>2 Critical Risks</div>
+            <button class="run-btn" onclick="runZeroPermScan()">▶ Re-Audit</button>
+          </div>
+        </div>
+        <div class="tc-body">
+          <div class="scan-progress" id="zpProg"><div class="sp-fill" id="zpProgFill"></div></div>
+          <div class="risk-score-wrap" id="zpCards"></div>
+          <table class="results-table" id="zpTable">
+            <thead><tr><th>App</th><th>Data Used</th><th>Permissions</th><th>Legitimate Use</th><th>Risk Score</th><th>Action</th></tr></thead>
+            <tbody id="zpTbody"></tbody>
+          </table>
+          <div style="margin-top:14px;padding:12px 16px;background:rgba(255,77,0,.05);border:1px solid rgba(255,77,0,.12);font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);line-height:1.6;">
+            🔬 <strong style="color:var(--text)">Scoring formula:</strong> Risk = (Data consumed ÷ Expected use case baseline) × (Dangerous permissions ÷ Total permissions) × 100. Score &gt;75 = Critical. 50–75 = High. 25–50 = Medium. &lt;25 = Safe.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /diag-content -->
+</div><!-- /diag-layout -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CURSOR ───
+const cursor=document.getElementById('cursor'),ring=document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px';});
+(function a(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(a);})();
+document.querySelectorAll('a,button,input,label,.dsn-item,.tracker-pill,.qual-opt,.vg-app').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ring.style.width='50px';ring.style.height='50px';});
+  el.addEventListener('mouseleave',()=>{ring.style.width='36px';ring.style.height='36px';});
+});
+
+// ─── UTILS ───
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.className='toast',3200);}
+function rand(a,b){return Math.random()*(b-a)+a;}
+function scrollTo(id){document.getElementById(id).scrollIntoView({behavior:'smooth',block:'start'});}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+async function animProg(fillId,barId){
+  const bar=document.getElementById(barId),fill=document.getElementById(fillId);
+  bar.style.display='block';fill.style.width='0%';
+  for(let i=0;i<=100;i+=2){fill.style.width=i+'%';await sleep(28);}
+  await sleep(400);bar.style.display='none';
+}
+function addLog(bodyId,msg,cls='info'){
+  const b=document.getElementById(bodyId);
+  const d=document.createElement('div');d.className='tl '+cls;d.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`;b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+function counter(id,target,prefix='',suffix='',dur=1200){
+  let c=0;const step=target/60;const el=document.getElementById(id);
+  const iv=setInterval(()=>{c=Math.min(c+step,target);el.textContent=prefix+Math.floor(c).toLocaleString()+suffix;if(c>=target)clearInterval(iv);},dur/60);
+}
+
+// ─── SAVINGS COUNTER ───
+setTimeout(()=>{
+  counter('swSaved',3240,'₦','');
+  counter('swBlocked',847,'','MB');
+  counter('swThreats',12400,'','');
+  counter('swTrackers',47,'','');
+},300);
+
+// ─── SIDE NAV ───
+document.querySelectorAll('.dsn-item').forEach(item=>{
+  item.addEventListener('click',()=>{document.querySelectorAll('.dsn-item').forEach(i=>i.classList.remove('active'));item.classList.add('active');});
+});
+
+// ─── TOGGLE TOOL ───
+function toggleTool(name,input){
+  const on=input.checked;
+  toast(on?`✓ ${name.charAt(0).toUpperCase()+name.slice(1)} enabled`:`⚠️ ${name.charAt(0).toUpperCase()+name.slice(1)} disabled`,on?'success':'warn');
+}
+
+// ═══════════════════════════════════
+// TOOL A: MALWARE SCANNER
+// ═══════════════════════════════════
+const malwareApps=[
+  {name:'FakeAV Pro',pkg:'com.fakeav.security',ico:'🦠',bytes:'340 MB',screenTime:'0 min',deviation:'+∞',risk:'critical',webview:true},
+  {name:'SlopAds Keyboard',pkg:'com.slopads.keyboard',ico:'⌨️',bytes:'128 MB',screenTime:'2 min',deviation:'+6400%',risk:'critical',webview:true},
+  {name:'TikTok',pkg:'com.tiktok.musically',ico:'🎵',bytes:'1.46 GB',screenTime:'3h 12m',deviation:'+1730%',risk:'high',webview:false},
+  {name:'WhatsApp',pkg:'com.whatsapp',ico:'💬',bytes:'374 MB',screenTime:'1h 48m',deviation:'Normal',risk:'safe',webview:false},
+  {name:'Facebook',pkg:'com.facebook.katana',ico:'👥',bytes:'290 MB',screenTime:'42 min',deviation:'+89%',risk:'medium',webview:false},
+  {name:'Instagram',pkg:'com.instagram.android',ico:'📷',bytes:'234 MB',screenTime:'31 min',deviation:'+340%',risk:'high',webview:false},
+];
+let quarantined=new Set();
+function renderMalwareTable(){
+  document.getElementById('malwareTbody').innerHTML=malwareApps.map(a=>`
+    <tr>
+      <td><div class="app-cell"><div class="app-ico-sm" style="background:${{critical:'rgba(255,77,0,.12)',high:'rgba(255,189,46,.1)',medium:'rgba(123,97,255,.1)',safe:'rgba(0,229,160,.08)'}[a.risk]}">${a.ico}</div><div><div class="app-name-sm">${a.name}</div><div class="app-pkg-sm">${a.pkg}</div></div></div></td>
+      <td style="font-family:'Space Mono',monospace;font-size:.72rem">${a.screenTime}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:.72rem">${a.bytes}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:.72rem;color:${{critical:'var(--accent2)',high:'var(--yellow)',medium:'var(--accent3)',safe:'var(--accent)'}[a.risk]}">${a.deviation}</td>
+      <td><span class="risk-badge ${a.risk}">${a.risk.toUpperCase()}</span>${a.webview?'<span style="font-family:Space Mono,monospace;font-size:.52rem;color:var(--accent2);display:block;margin-top:3px">Hidden WebView</span>':''}</td>
+      <td>${quarantined.has(a.pkg)?`<button class="quarantine-btn quarantined" disabled>Quarantined</button>`:`<button class="quarantine-btn" onclick="quarantine('${a.pkg}','${a.name}')">One-Tap Quarantine</button>`}</td>
+    </tr>`).join('');
+}
+function quarantine(pkg,name){
+  quarantined.add(pkg);renderMalwareTable();
+  toast(`🔒 ${name} quarantined — all network permissions revoked`,'warn');
+}
+async function runMalwareScan(){
+  const btn=document.getElementById('malwareRunBtn');btn.disabled=true;btn.textContent='Scanning…';
+  document.getElementById('malwareLog').style.display='block';
+  const lb=document.getElementById('malwareLogBody');lb.innerHTML='';
+  await animProg('malwareProgFill','malwareProg');
+  const logs=[
+    {t:0,msg:'Initialising behavioral scanner…',cls:'cmd'},
+    {t:200,msg:'Loading app manifest database (412 apps)…',cls:'info'},
+    {t:500,msg:'Checking screen-off data consumption for 412 apps…',cls:'info'},
+    {t:900,msg:'⚠ ALERT: com.fakeav.security — 340MB consumed, 0 min screen time',cls:'threat'},
+    {t:1200,msg:'→ Hidden WebView detected via socket fingerprint (port 8080, HTTP/1.1 ad calls)',cls:'err'},
+    {t:1500,msg:'⚠ ALERT: com.slopads.keyboard — 128MB consumed, 2 min screen time (+6400%)',cls:'threat'},
+    {t:1800,msg:'→ Hidden WebView confirmed: 47 ad impression URLs detected',cls:'err'},
+    {t:2000,msg:'com.tiktok.musically — 1.46GB, deviation +1730% — FLAGGED HIGH',cls:'warn'},
+    {t:2300,msg:'com.facebook.katana — 290MB, deviation +89% — FLAGGED MEDIUM',cls:'warn'},
+    {t:2500,msg:'com.whatsapp — 374MB — Normal behaviour, SAFE',cls:'ok'},
+    {t:2800,msg:'Scan complete. 2 critical, 2 high, 1 medium, 1 safe.',cls:'white'},
+    {t:3000,msg:'One-Tap Quarantine ready for critical apps.',cls:'blocked'},
+  ];
+  logs.forEach(l=>setTimeout(()=>addLog('malwareLogBody',l.msg,l.cls),l.t));
+  setTimeout(()=>{btn.disabled=false;btn.textContent='▶ Scan Now';toast('🦠 Scan complete — 2 critical threats found','warn');},3200);
+}
+renderMalwareTable();
+
+// ═══════════════════════════════════
+// TOOL B: TRACKER BLOCKER
+// ═══════════════════════════════════
+const trackers=[
+  {name:'Google Analytics',blocked:true},
+  {name:'Meta Pixel',blocked:true},
+  {name:'Doubleclick',blocked:true},
+  {name:'Facebook Connect',blocked:true},
+  {name:'Google Tag Mgr',blocked:true},
+  {name:'Twitter Ads',blocked:true},
+  {name:'Hotjar',blocked:true},
+  {name:'Amplitude',blocked:false},
+  {name:'Mixpanel',blocked:false},
+  {name:'Segment.io',blocked:true},
+  {name:'Crashlytics',blocked:false},
+  {name:'Branch.io',blocked:true},
+];
+function renderTrackers(){
+  document.getElementById('trackerGrid').innerHTML=trackers.map((t,i)=>`
+    <div class="tracker-pill ${t.blocked?'blocked':''}" onclick="toggleTracker(${i})" style="cursor:pointer">${t.name}</div>`).join('');
+}
+function toggleTracker(i){
+  trackers[i].blocked=!trackers[i].blocked;renderTrackers();
+  toast(trackers[i].blocked?`✓ ${trackers[i].name} blocked`:`⚠️ ${trackers[i].name} allowed`,'info');
+}
+async function runTrackerScan(){
+  document.getElementById('trackerLog').style.display='block';
+  const lb=document.getElementById('trackerLogBody');lb.innerHTML='';
+  const logs=[
+    {t:0,msg:'Querying DNS request cache…',cls:'cmd'},
+    {t:300,msg:'1,247 DNS requests found in last 24h',cls:'info'},
+    {t:600,msg:'✓ BLOCKED: googletagmanager.com (37 requests)',cls:'blocked'},
+    {t:900,msg:'✓ BLOCKED: connect.facebook.net (8 requests)',cls:'blocked'},
+    {t:1200,msg:'✓ BLOCKED: pixel.ads.twitter.com (2 requests)',cls:'blocked'},
+    {t:1400,msg:'Saved 12.4 MB of tracking payload data',cls:'ok'},
+    {t:1600,msg:'DNS blackhole serving NXDOMAIN on 47 domains today',cls:'ok'},
+  ];
+  logs.forEach(l=>setTimeout(()=>addLog('trackerLogBody',l.msg,l.cls),l.t));
+  setTimeout(()=>{
+    document.getElementById('dnsFill').style.width='96.2%';
+    toast('✓ Tracker scan complete — 47 domains silenced','success');
+  },1800);
+}
+setTimeout(()=>{document.getElementById('dnsFill').style.width='96.2%';},800);
+renderTrackers();
+
+// ═══════════════════════════════════
+// TOOL C: PHISHING SHIELD
+// ═══════════════════════════════════
+const shieldEvents=[
+  {type:'blocked',domain:'fake-MTNN-topup.ng',reason:'Nigerian phishing blacklist · Drive-by download prevented (2.3MB)',time:'02:41 AM'},
+  {type:'blocked',domain:'prize-winner-ng.xyz',reason:'Spamhaus DBL match · Auto-redirect malware',time:'11:24 PM'},
+  {type:'warn',domain:'loan-app-fast.ng',reason:'Suspicious redirect chain detected · Monitoring',time:'08:17 PM'},
+  {type:'blocked',domain:'Airetel-free-data.tk',reason:'Google Safe Browsing · Phishing + adware payload',time:'06:03 PM'},
+  {type:'safe',domain:'ncc.gov.ng',reason:'Government domain · Verified safe',time:'04:28 PM'},
+];
+document.getElementById('shieldEvents').innerHTML=shieldEvents.map(e=>`
+  <div class="shield-event">
+    <div class="se-type ${e.type}">${e.type}</div>
+    <div style="flex:1;min-width:0">
+      <div class="se-domain">${e.domain}</div>
+      <div class="se-reason">${e.reason}</div>
+    </div>
+    <div class="se-time">${e.time}</div>
+  </div>`).join('');
+
+const safeUrls=['ncc.gov.ng','google.com','youtube.com','github.com','AI Data Meter.ng'];
+const dangerUrls=['fake-MTNN','free-airtime','prize-winner','phishing','topup-free','loan-app-fast'];
+function checkURL(){
+  const input=document.getElementById('urlInput').value.trim();const res=document.getElementById('urlResult');
+  if(!input){toast('Enter a URL to check','warn');return;}
+  res.style.display='none';
+  setTimeout(()=>{
+    const isDanger=dangerUrls.some(d=>input.toLowerCase().includes(d));
+    const isSafe=safeUrls.some(d=>input.toLowerCase().includes(d));
+    if(isDanger){res.className='url-result danger';res.textContent='⛔ BLOCKED — This URL matches our phishing/malware blacklist. Connection killed. No bytes spent.';}
+    else if(isSafe){res.className='url-result safe';res.textContent='✓ SAFE — URL verified against Google Safe Browsing, Spamhaus, and AI Data Meter blacklists. No threats detected.';}
+    else{res.className='url-result warn';res.textContent='⚠ UNKNOWN — URL not in known-safe or known-threat lists. Proceed with caution. AI Data Meter is monitoring.';}
+    res.style.display='block';
+  },800);
+}
+document.getElementById('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkURL();});
+
+// ═══════════════════════════════════
+// TOOL D: UPDATE GUARDIAN
+// ═══════════════════════════════════
+const updates=[
+  {name:'WhatsApp',ico:'💬',size:'87 MB',status:'held',type:'App Update'},
+  {name:'Android System',ico:'🤖',size:'1.4 GB',status:'held',type:'OS Update'},
+  {name:'Chrome',ico:'🌐',size:'142 MB',status:'held',type:'App Update'},
+  {name:'Facebook',ico:'👥',size:'210 MB',status:'wifi',type:'Queued for Wi-Fi'},
+];
+let updateStatuses={0:'held',1:'held',2:'held',3:'wifi'};
+function renderUpdates(){
+  const panel=document.getElementById('ugPanel');
+  panel.innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border);padding:18px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Intercepted Updates</div>
+      ${updates.map((u,i)=>`<div class="ug-app-row">
+        <div class="ug-app-ico" style="background:rgba(255,189,46,.1)">${u.ico}</div>
+        <div class="ug-app-info"><div class="ug-app-name">${u.name}</div><div class="ug-app-size">${u.type} · ${u.size}</div></div>
+        <span class="ug-status ${updateStatuses[i]}">${{held:'⏸ Held',wifi:'📶 Wi-Fi',blocked:'🚫 Blocked',approved:'✓ Approved'}[updateStatuses[i]]}</span>
+        ${updateStatuses[i]==='held'?`<button class="ug-approve" onclick="approveUpdate(${i},'${u.name}')">Approve →</button>`:''}
+      </div>`).join('')}
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);padding:18px;">
+      <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Policy Settings</div>
+      ${[['Mobile Data Updates','Block all','Wi-Fi only (recommended)','Always allow'],['OS Updates','Block on mobile','Wi-Fi only','Manual only'],['App Updates','Block on mobile','Wi-Fi only','Always allow']].map(([label,...opts])=>`
+      <div style="margin-bottom:14px;">
+        <div style="font-size:.82rem;font-weight:500;margin-bottom:6px;">${label}</div>
+        <div style="display:flex;gap:4px;">${opts.map(o=>`<button onclick="policySelect(this)" style="font-family:'Space Mono',monospace;font-size:.56rem;padding:4px 10px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;transition:all .2s" onmouseover="this.style.color='var(--accent)'" onmouseout="if(!this.classList.contains('active'))this.style.color='var(--muted)'">${o}</button>`).join('')}</div>
+      </div>`).join('')}
+    </div>`;
+}
+function policySelect(btn){const parent=btn.parentElement;parent.querySelectorAll('button').forEach(b=>{b.style.background='none';b.style.borderColor='var(--border)';b.style.color='var(--muted)';b.classList.remove('active');});btn.style.background='rgba(0,229,160,.06)';btn.style.borderColor='rgba(0,229,160,.25)';btn.style.color='var(--accent)';btn.classList.add('active');toast(`Policy updated: ${btn.textContent}`,'success');}
+function approveUpdate(i,name){updateStatuses[i]='approved';renderUpdates();toast(`✓ ${name} update approved — will proceed on next Wi-Fi session`,'success');}
+function allowAllWifi(){Object.keys(updateStatuses).forEach(k=>{if(updateStatuses[k]==='held')updateStatuses[k]='wifi';});renderUpdates();toast('All held updates queued for next Wi-Fi session','success');}
+function blockAllUpdates(){Object.keys(updateStatuses).forEach(k=>updateStatuses[k]='blocked');renderUpdates();toast('🚫 All mobile data updates blocked until manually authorised','warn');}
+renderUpdates();
+
+// ═══════════════════════════════════
+// TOOL E: VIDEO GOVERNOR
+// ═══════════════════════════════════
+const videoApps=[
+  {name:'TikTok',ico:'🎵',col:'#ff4d00',native:'1080p',capped:'480p',saving:'62%',qualIdx:1},
+  {name:'Instagram Reels',ico:'📷',col:'#7b61ff',native:'1080p',capped:'480p',saving:'58%',qualIdx:1},
+  {name:'YouTube',ico:'▶️',col:'#ff0000',native:'1080p',capped:'720p',saving:'35%',qualIdx:2},
+];
+const qualities=['240p','480p','720p','1080p (default)'];
+let videoSettings=[1,1,2];
+function renderVideoApps(){
+  document.getElementById('videoApps').innerHTML=videoApps.map((a,i)=>`
+    <div class="vg-app">
+      <div class="vg-ico" style="background:${a.col}18">${a.ico}</div>
+      <div class="vg-info">
+        <div class="vg-name">${a.name}</div>
+        <div class="vg-qual-row">
+          <span class="qual-label">Cap Quality:</span>
+          <div class="qual-options">${qualities.map((q,qi)=>`<div class="qual-opt ${qi===videoSettings[i]?'cap':qi===3?'active':''}" onclick="setQuality(${i},${qi})">${q}</div>`).join('')}</div>
+        </div>
+      </div>
+      <div class="vg-saving">
+        <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--accent)">${videoSettings[i]<3?videoApps[i].saving:'0%'}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">${videoSettings[i]<3?'Data saved':'No cap (HD)' }</div>
+      </div>
+    </div>`).join('');
+}
+function setQuality(appIdx,qIdx){videoSettings[appIdx]=qIdx;renderVideoApps();toast(`📹 ${videoApps[appIdx].name} capped to ${qualities[qIdx]}`,'success');}
+renderVideoApps();
+
+// ═══════════════════════════════════
+// TOOL F: ZERO-PERM AUDIT
+// ═══════════════════════════════════
+const zpApps=[
+  {name:'Torch Flashlight Pro',pkg:'com.torch.flashlight',ico:'🔦',col:'rgba(255,77,0,.12)',data:'200 MB',dataRaw:200,perms:['Location','Contacts','Camera','SMS','Microphone'],category:'Utility · Should use <1MB',score:94,verdict:'This flashlight app has used 200MB and requested Location, Contacts, SMS and Microphone. There is no legitimate reason for any of these. This is a High-Risk Data Thief.',action:'uninstall'},
+  {name:'Fast Loan Now',pkg:'ng.fastloan.app',ico:'💸',col:'rgba(255,77,0,.1)',data:'84 MB',dataRaw:84,perms:['Contacts','SMS','Call Logs','Storage','Location'],category:'Finance · Possible stalkerware',score:78,verdict:'Reads your Contacts and Call Logs — common tactic for debt collector blackmail. 84MB used with no clear audio/video feature. High risk.',action:'uninstall'},
+  {name:'TikTok',pkg:'com.tiktok.musically',ico:'🎵',col:'rgba(255,77,0,.08)',data:'1.46 GB',dataRaw:1460,perms:['Camera','Microphone','Location','Storage','Contacts'],category:'Social Video · Data justified, perms borderline',score:52,verdict:'Data consumption is high but consistent with a video app. Location and Contacts access are not required for core function. Review permissions.',action:'review'},
+  {name:'Calculator Basic',pkg:'com.calc.basic',ico:'🧮',col:'rgba(0,229,160,.06)',data:'0.2 MB',dataRaw:0.2,perms:['None'],category:'Utility · Expected',score:2,verdict:'Clean. No suspicious permissions. Data usage consistent with crash reporting only.',action:'safe'},
+];
+let uninstalled=new Set();
+function renderZP(){
+  document.getElementById('zpCards').innerHTML=zpApps.filter((_,i)=>i<3).map((a,i)=>`
+    <div class="rs-card">
+      <div class="rs-app"><div class="rs-ico" style="background:${a.col}">${a.ico}</div><div><div class="rs-name">${a.name}</div><div style="font-family:'Space Mono',monospace;font-size:.55rem;color:var(--muted)">${a.category}</div></div></div>
+      <div class="rs-score-val" style="color:${{critical:true,high:true}[a.score>74?'critical':a.score>49?'high':'ok']||a.score<25?'var(--accent)':a.score<50?'var(--accent3)':a.score<75?'var(--yellow)':'var(--accent2)'}">${a.score}</div>
+      <div class="rs-score-lbl">${a.score>74?'Critical Risk':a.score>49?'High Risk':a.score>24?'Medium Risk':'Safe'}</div>
+      <div class="rs-bar-wrap"><div class="rs-bar"><div class="rs-fill" style="width:${a.score}%;background:${a.score>74?'var(--accent2)':a.score>49?'var(--yellow)':a.score>24?'var(--accent3)':'var(--accent)'}"></div></div></div>
+      <div class="rs-perms">${a.perms.map(p=>`<span class="rs-perm ${['Location','Contacts','SMS','Microphone','Call Logs'].includes(p)?'danger':''}">${p}</span>`).join('')}</div>
+      <div class="rs-verdict ${a.score>74?'danger':a.score>49?'warn':'ok'}">${a.verdict}</div>
+      ${a.action==='uninstall'?`<button class="uninstall-btn" onclick="flagUninstall('${a.pkg}','${a.name}')">⚠ Flag for Uninstall</button>`:''}
+    </div>`).join('');
+  
+  document.getElementById('zpTbody').innerHTML=zpApps.map(a=>`
+    <tr>
+      <td><div class="app-cell"><div class="app-ico-sm" style="background:${a.col}">${a.ico}</div><div><div class="app-name-sm">${a.name}</div><div class="app-pkg-sm">${a.pkg}</div></div></div></td>
+      <td style="font-family:'Space Mono',monospace;font-size:.72rem">${a.data}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted)">${a.perms.join(', ')}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${a.category}</td>
+      <td><span class="risk-badge ${a.score>74?'critical':a.score>49?'high':a.score>24?'medium':'safe'}">${a.score}/100</span></td>
+      <td>${a.action==='uninstall'?`<button class="quarantine-btn ${uninstalled.has(a.pkg)?'quarantined':''}" onclick="flagUninstall('${a.pkg}','${a.name}')" ${uninstalled.has(a.pkg)?'disabled':''}>Flag Uninstall</button>`:a.action==='review'?`<button class="quarantine-btn" style="color:var(--yellow);border-color:rgba(255,189,46,.3)">Review Perms</button>`:`<span style="color:var(--accent);font-family:'Space Mono',monospace;font-size:.62rem">✓ Clean</span>`}</td>
+    </tr>`).join('');
+}
+function flagUninstall(pkg,name){uninstalled.add(pkg);renderZP();toast(`⚠️ ${name} flagged — go to Settings > Apps to uninstall`,'warn');}
+async function runZeroPermScan(){
+  await animProg('zpProgFill','zpProg');
+  renderZP();toast('Zero-Perm Audit complete — 2 critical risks found','warn');
+}
+renderZP();
+
+// ═══════════════════════════════════
+// RUN ALL / EXPORT
+// ═══════════════════════════════════
+async function runAllScans(){
+  toast('🔍 Full diagnostic scan started…','info');
+  await sleep(400);
+  await runMalwareScan();
+  await sleep(3400);
+  toast('📊 All tools scanned — report ready','success');
+}
+function exportReport(){
+  const ts=new Date().toISOString().split('T')[0];
+  const data={timestamp:new Date().toISOString(),device:'Samsung Galaxy A34 5G',telco:'MTNN Nigeria',summary:{saved:'₦3,240',blocked:'847 MB',threats:12400,trackers:47},tools:{malware:{status:'2 critical',quarantined:Array.from(quarantined)},tracker:{blocked:47,saved:'12.4 MB'},phishing:{blocked:3},update:{held:3},video:{savings:'340 MB'},zeroPerm:{critical:2,flagged:Array.from(uninstalled)}}};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`AI Data Meter-diagnostic-${ts}.json`;a.click();
+  toast('✓ Diagnostic report exported','success');
+}
+
+// ─── REVEAL ───
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.06});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// animate DNS bar on load
+setTimeout(()=>{const f=document.getElementById('dnsFill');if(f)f.style.width='96.2%';},600);
+</script>
+
+<script>
+// ── AiTelDa Theme System ─────────────────────────────────────────────
+(function() {
+  var saved = localStorage.getItem('aitelda-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var cur = html.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('aitelda-theme', next);
+  // Update any toggle buttons on page
+  document.querySelectorAll('.theme-toggle-btn').forEach(function(btn) {
+    btn.title = next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  });
+}
+
+// Apply saved theme immediately (also handles no-flash on load)
+(function() {
+  var saved = localStorage.getItem('aitelda-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+</script>
+
+</body>
+</html>

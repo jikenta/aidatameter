@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waitlist Admin — AiTelDa</title>
+<script>document.documentElement.setAttribute("data-theme", localStorage.getItem("aitelda-theme")||"dark");</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── Base Variables ───────────────────────────────────────────────── */
+  :root {
+    --bg:      #050508;
+    --surface: #0c0c14;
+    --border:  #1a1a2e;
+    --accent:  #00e5a0;
+    --accent2: #ff4d00;
+    --accent3: #7b61ff;
+    --text:    #e8e8f0;
+    --muted:   #6b6b80;
+    --card:    #0f0f1a;
+    --yellow:  #ffbd2e;
+    --green:   #27c93f;
+  }
+  [data-theme="light"] {
+    --bg:      #f4f4f8;
+    --surface: #ffffff;
+    --border:  #d8d8e8;
+    --text:    #0e0e18;
+    --muted:   #6b6b80;
+    --card:    #ffffff;
+    --accent:  #00c785;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────────── */
+  .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* ── Sidebar ─────────────────────────────────────────────────────── */
+  .sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sb-logo {
+    padding: 22px 22px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sb-logo a {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -.03em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .sb-logo a span { color: var(--accent); }
+  .sb-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.52rem;
+    background: rgba(255,77,0,.15);
+    color: var(--accent2);
+    border: 1px solid rgba(255,77,0,.2);
+    padding: 2px 7px;
+    margin-left: 8px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  .sb-section { padding: 18px 14px 6px; font-family: 'Space Mono', monospace; font-size: 0.52rem; color: var(--muted); letter-spacing: .18em; text-transform: uppercase; }
+  .sb-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 20px;
+    font-size: 0.84rem; color: var(--muted);
+    cursor: pointer; text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all .2s;
+  }
+  .sb-item:hover { background: rgba(0,229,160,.04); color: var(--text); }
+  .sb-item.active { background: rgba(0,229,160,.08); color: var(--text); border-left-color: var(--accent); }
+  .sb-icon { font-size: 0.9rem; width: 18px; text-align: center; }
+  .sb-bottom {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+  }
+
+  /* ── Main ────────────────────────────────────────────────────────── */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  /* ── Topbar ──────────────────────────────────────────────────────── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(5,5,8,.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 80;
+    gap: 16px;
+  }
+  [data-theme="light"] .topbar { background: rgba(244,244,248,.95); }
+  .topbar-left { display: flex; flex-direction: column; gap: 2px; }
+  .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+  .topbar-sub { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted); letter-spacing: .06em; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .tb-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.64rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all .2s;
+    border: none;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  }
+  .tb-btn.primary { background: var(--accent); color: #000; font-weight: 700; }
+  .tb-btn.primary:hover { background: #00ffa8; }
+  .tb-btn.ghost { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .tb-btn.ghost:hover { color: var(--accent); border-color: rgba(0,229,160,.3); }
+  .theme-toggle-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: 1px solid var(--border);
+    padding: 7px 12px; cursor: pointer;
+    font-family: 'Space Mono', monospace; font-size: 0.6rem;
+    color: var(--muted); letter-spacing: .06em; text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    transition: border-color .2s, color .2s;
+  }
+  .theme-toggle-btn:hover { color: var(--accent); border-color: rgba(0,229,160,.3); }
+
+  /* ── Content ─────────────────────────────────────────────────────── */
+  .content { padding: 28px 32px; flex: 1; }
+
+  /* ── Login Gate ──────────────────────────────────────────────────── */
+  #loginGate {
+    display: flex; align-items: center; justify-content: center;
+    min-height: calc(100vh - 65px);
+  }
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 36px;
+    width: 380px;
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  }
+  .login-box h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; margin-bottom: 6px; }
+  .login-box p { color: var(--muted); font-size: 0.88rem; margin-bottom: 24px; }
+  .lg-field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+  .lg-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .lg-input {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 12px 14px;
+    font-family: 'Instrument Sans', sans-serif; font-size: 0.9rem;
+    outline: none; transition: border-color .2s; width: 100%;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+  }
+  .lg-input:focus { border-color: var(--accent); }
+  .lg-input::placeholder { color: var(--muted); }
+  [data-theme="light"] .lg-input { background: #f0f0f6; }
+  .lg-submit {
+    width: 100%; background: var(--accent); color: #000;
+    border: none; padding: 13px;
+    font-family: 'Space Mono', monospace; font-size: 0.76rem; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    transition: background .2s; margin-top: 6px;
+  }
+  .lg-submit:hover { background: #00ffa8; }
+  .lg-submit:disabled { opacity: .6; cursor: not-allowed; }
+  .lg-err { color: var(--accent2); font-family: 'Space Mono', monospace; font-size: 0.66rem; margin-top: 10px; display: none; }
+
+  /* ── Stat Cards ──────────────────────────────────────────────────── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 18px 20px;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  }
+  .sc-label { font-family: 'Space Mono', monospace; font-size: 0.56rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .sc-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; letter-spacing: -.04em; }
+  .sc-sub { font-size: 0.76rem; color: var(--muted); margin-top: 4px; }
+  .sc-value.green { color: var(--accent); }
+  .sc-value.orange { color: var(--accent2); }
+  .sc-value.purple { color: var(--accent3); }
+  .sc-value.yellow { color: var(--yellow); }
+
+  /* ── Filters ─────────────────────────────────────────────────────── */
+  .filter-bar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .f-input {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 9px 14px;
+    font-family: 'Instrument Sans', sans-serif; font-size: 0.84rem;
+    outline: none; transition: border-color .2s;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+  }
+  .f-input:focus { border-color: var(--accent); }
+  .f-input::placeholder { color: var(--muted); }
+  [data-theme="light"] .f-input { background: #f0f0f6; }
+  .f-search { flex: 1; min-width: 200px; max-width: 300px; }
+  .f-select { min-width: 140px; cursor: pointer; }
+  .f-tag {
+    font-family: 'Space Mono', monospace; font-size: 0.6rem;
+    letter-spacing: .06em; text-transform: uppercase;
+    padding: 7px 14px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted);
+    cursor: pointer; transition: all .2s;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  }
+  .f-tag.active { background: rgba(0,229,160,.1); border-color: rgba(0,229,160,.3); color: var(--accent); }
+  .f-tag:hover:not(.active) { color: var(--text); }
+  .f-count { margin-left: auto; font-family: 'Space Mono', monospace; font-size: 0.66rem; color: var(--muted); white-space: nowrap; }
+
+  /* ── Table ───────────────────────────────────────────────────────── */
+  .table-wrap {
+    background: var(--card); border: 1px solid var(--border);
+    overflow: hidden;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  }
+  .reg-table { width: 100%; border-collapse: collapse; }
+  .reg-table th {
+    font-family: 'Space Mono', monospace; font-size: 0.55rem;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+    text-align: left; padding: 13px 16px;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+    background: var(--surface);
+  }
+  .reg-table td {
+    padding: 13px 16px; border-bottom: 1px solid rgba(26,26,46,.5);
+    vertical-align: middle;
+  }
+  [data-theme="light"] .reg-table td { border-color: #ebebf5; }
+  .reg-table tr:last-child td { border-bottom: none; }
+  .reg-table tr:hover td { background: rgba(0,229,160,.015); }
+  .t-name { font-weight: 500; }
+  .t-email { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--muted); }
+  .t-phone { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--muted); }
+  .t-date { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted); white-space: nowrap; }
+  .t-pos { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--accent); }
+
+  /* Device badge */
+  .dev-badge {
+    font-family: 'Space Mono', monospace; font-size: 0.55rem;
+    padding: 3px 8px; letter-spacing: .04em; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .dev-badge.android { background: rgba(0,229,160,.1); color: var(--accent); border: 1px solid rgba(0,229,160,.2); }
+  .dev-badge.ios     { background: rgba(123,97,255,.1); color: var(--accent3); border: 1px solid rgba(123,97,255,.2); }
+  .dev-badge.both    { background: rgba(255,189,46,.1); color: var(--yellow); border: 1px solid rgba(255,189,46,.2); }
+
+  /* Status badge */
+  .st-badge {
+    font-family: 'Space Mono', monospace; font-size: 0.55rem;
+    padding: 3px 8px; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .st-badge.waiting  { background: rgba(107,107,128,.1); color: var(--muted); border: 1px solid var(--border); }
+  .st-badge.invited  { background: rgba(0,229,160,.1); color: var(--accent); border: 1px solid rgba(0,229,160,.2); }
+  .st-badge.registered { background: rgba(123,97,255,.1); color: var(--accent3); border: 1px solid rgba(123,97,255,.2); }
+  .st-badge.declined { background: rgba(255,77,0,.1); color: var(--accent2); border: 1px solid rgba(255,77,0,.2); }
+
+  /* Row actions */
+  .row-actions { display: flex; gap: 6px; align-items: center; }
+  .row-btn {
+    font-family: 'Space Mono', monospace; font-size: 0.54rem;
+    letter-spacing: .04em; text-transform: uppercase;
+    padding: 4px 9px; background: none;
+    border: 1px solid var(--border); color: var(--muted);
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .row-btn:hover { color: var(--accent); border-color: rgba(0,229,160,.3); }
+  .row-btn.danger:hover { color: var(--accent2); border-color: rgba(255,77,0,.3); }
+
+  /* ── Pagination ──────────────────────────────────────────────────── */
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0; flex-wrap: wrap; gap: 10px;
+  }
+  .pg-info { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--muted); }
+  .pg-btns { display: flex; gap: 8px; }
+  .pg-btn {
+    font-family: 'Space Mono', monospace; font-size: 0.62rem;
+    padding: 7px 14px; background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer; transition: all .2s;
+    clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+  }
+  .pg-btn:hover:not(:disabled) { color: var(--accent); border-color: rgba(0,229,160,.3); }
+  .pg-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* ── Invite Batch Modal ──────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(5,5,8,.88);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 32px; width: 420px; max-width: 90vw;
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  }
+  .modal-box h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; margin-bottom: 8px; }
+  .modal-box p { color: var(--muted); font-size: 0.88rem; line-height: 1.6; margin-bottom: 22px; }
+  .modal-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* ── Toast ───────────────────────────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 12px 18px;
+    font-family: 'Space Mono', monospace; font-size: 0.68rem;
+    z-index: 9999; transform: translateY(80px); opacity: 0;
+    transition: all .35s cubic-bezier(.22,.68,0,1.2); max-width: 320px;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: rgba(0,229,160,.35); color: var(--accent); }
+  .toast.error   { border-color: rgba(255,77,0,.35); color: var(--accent2); }
+
+  /* ── Empty / Loading ─────────────────────────────────────────────── */
+  .empty-row td { text-align: center; padding: 48px 16px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.68rem; }
+  .skel { height: 14px; border-radius: 2px; background: linear-gradient(90deg, var(--border) 25%, rgba(26,26,46,.8) 50%, var(--border) 75%); background-size: 200% 100%; animation: skel 1.4s ease infinite; }
+  @keyframes skel { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* ── Chart bars ──────────────────────────────────────────────────── */
+  .mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 60px; margin-top: 16px; }
+  .mc-bar { flex: 1; background: rgba(0,229,160,.25); min-width: 6px; position: relative; transition: background .2s; cursor: default; }
+  .mc-bar:hover { background: var(--accent); }
+  .mc-bar[title]:hover::after { content: attr(title); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); padding: 3px 7px; font-size: 0.55rem; font-family: 'Space Mono', monospace; white-space: nowrap; color: var(--text); z-index: 10; }
+
+  /* ── Responsive ──────────────────────────────────────────────────── */
+  @media (max-width: 1024px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .topbar { padding: 14px 20px; }
+    .content { padding: 20px; }
+    .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .filter-bar { gap: 8px; }
+    .f-search { max-width: 100%; }
+  }
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <a href="index.html">Ai<span>Tel</span>Da</a>
+      <span class="sb-badge">Admin</span>
+    </div>
+    <div class="sb-section">Waitlist</div>
+    <a class="sb-item active" onclick="showView('list')"><span class="sb-icon">📋</span>All Registrants</a>
+    <a class="sb-item" onclick="showView('stats')"><span class="sb-icon">📊</span>Statistics</a>
+    <a class="sb-item" onclick="exportCSV()"><span class="sb-icon">⬇</span>Export CSV</a>
+    <div class="sb-section">Actions</div>
+    <a class="sb-item" onclick="openInviteModal()"><span class="sb-icon">📨</span>Send Invites</a>
+    <a class="sb-item" href="index.html"><span class="sb-icon">🌐</span>View Site</a>
+    <a class="sb-item" href="dashboard2.html"><span class="sb-icon">📡</span>App Dashboard</a>
+    <div class="sb-section">Account</div>
+    <a class="sb-item" onclick="doLogout()" style="color:var(--accent2)"><span class="sb-icon">🚪</span>Log Out</a>
+    <div class="sb-bottom">
+      AiTelDa Admin v2.0<br>
+      <span id="sbLoggedAs" style="color:var(--accent)"></span>
+    </div>
+  </aside>
+
+  <!-- ── Main ──────────────────────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Waitlist Admin</div>
+        <div class="topbar-sub" id="tbSub">Loading...</div>
+      </div>
+      <div class="topbar-right">
+        <button class="tb-btn ghost" onclick="openInviteModal()">📨 Send Invites</button>
+        <button class="tb-btn primary" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="theme-toggle-btn" onclick="toggleTheme()">☀ 🌙</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Login Gate -->
+      <div id="loginGate">
+        <div class="login-box">
+          <h2>Admin Access</h2>
+          <p>Log in with your AiTelDa account to manage the early access waitlist.</p>
+          <div class="lg-field">
+            <label class="lg-label" for="lgEmail">Email</label>
+            <input class="lg-input" id="lgEmail" type="email" placeholder="admin@aitelda.ng" autocomplete="email">
+          </div>
+          <div class="lg-field">
+            <label class="lg-label" for="lgPw">Password</label>
+            <input class="lg-input" id="lgPw" type="password" placeholder="••••••••" autocomplete="current-password"
+                   onkeydown="if(event.key==='Enter')doLogin()">
+          </div>
+          <button class="lg-submit" id="lgBtn" onclick="doLogin()">Log In</button>
+          <div class="lg-err" id="lgErr"></div>
+        </div>
+      </div>
+
+      <!-- Dashboard views (hidden until logged in) -->
+      <div id="dashContent" style="display:none">
+
+        <!-- View: List -->
+        <div id="viewList">
+          <!-- Stat cards -->
+          <div class="stats-row" id="statsRow">
+            <div class="stat-card"><div class="sc-label">Total Registered</div><div class="sc-value green" id="stTotal">—</div><div class="sc-sub">All time</div></div>
+            <div class="stat-card"><div class="sc-label">Waiting</div><div class="sc-value yellow" id="stWaiting">—</div><div class="sc-sub">Not yet invited</div></div>
+            <div class="stat-card"><div class="sc-label">Invited</div><div class="sc-value purple" id="stInvited">—</div><div class="sc-sub">Email sent</div></div>
+            <div class="stat-card"><div class="sc-label">Converted</div><div class="sc-value" id="stConverted">—</div><div class="sc-sub">Signed up</div></div>
+          </div>
+
+          <!-- Filters -->
+          <div class="filter-bar">
+            <input class="f-input f-search" id="searchQ" type="text" placeholder="Search name, email, or phone…"
+                   oninput="debounceSearch()" autocomplete="off">
+            <select class="f-input f-select" id="filterStatus" onchange="loadPage(1)">
+              <option value="">All Statuses</option>
+              <option value="waiting">Waiting</option>
+              <option value="invited">Invited</option>
+              <option value="registered">Registered</option>
+              <option value="declined">Declined</option>
+            </select>
+            <select class="f-input f-select" id="filterDevice" onchange="loadPage(1)">
+              <option value="">All Devices</option>
+              <option value="android">Android</option>
+              <option value="ios">iOS</option>
+              <option value="both">Both</option>
+            </select>
+            <button class="f-tag" onclick="clearFilters()">Clear</button>
+            <span class="f-count" id="filterCount"></span>
+          </div>
+
+          <!-- Table -->
+          <div class="table-wrap">
+            <table class="reg-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Device</th>
+                  <th>Status</th>
+                  <th>Registered</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);font-family:'Space Mono',monospace;font-size:.68rem">Loading registrants...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <span class="pg-info" id="pgInfo"></span>
+            <div class="pg-btns">
+              <button class="pg-btn" id="pgPrev" onclick="loadPage(currentPage-1)" disabled>← Prev</button>
+              <button class="pg-btn" id="pgNext" onclick="loadPage(currentPage+1)">Next →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- View: Stats -->
+        <div id="viewStats" style="display:none">
+          <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card">
+              <div class="sc-label">Android</div>
+              <div class="sc-value green" id="stAndroid">—</div>
+              <div class="sc-sub">Users on Android</div>
+            </div>
+            <div class="stat-card">
+              <div class="sc-label">iOS</div>
+              <div class="sc-value purple" id="stIos">—</div>
+              <div class="sc-sub">Users on iPhone</div>
+            </div>
+            <div class="stat-card">
+              <div class="sc-label">Both</div>
+              <div class="sc-value yellow" id="stBoth">—</div>
+              <div class="sc-sub">Using both devices</div>
+            </div>
+          </div>
+          <div class="stat-card" style="margin-bottom:20px">
+            <div class="sc-label">Daily Signups — Last 30 Days</div>
+            <div class="mini-chart" id="miniChart"></div>
+          </div>
+          <div class="stats-row" style="grid-template-columns:1fr 1fr">
+            <div class="stat-card">
+              <div class="sc-label">Invite Conversion Rate</div>
+              <div class="sc-value green" id="stConvRate">—</div>
+              <div class="sc-sub">Invited → Registered</div>
+            </div>
+            <div class="stat-card">
+              <div class="sc-label">Wants Email Updates</div>
+              <div class="sc-value" id="stUpdates">—</div>
+              <div class="sc-sub">opted in to notifications</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /dashContent -->
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- Invite Batch Modal -->
+<div class="modal-overlay" id="inviteModal">
+  <div class="modal-box">
+    <h3>Send Invite Batch</h3>
+    <p>Mark the next N <em>waiting</em> registrants as invited. You can then export the CSV and paste their emails into Mailchimp, Brevo, or any email tool.</p>
+    <div class="modal-row">
+      <div class="lg-field" style="flex:1">
+        <label class="lg-label">How many to invite?</label>
+        <input class="lg-input" id="inviteCount" type="number" value="100" min="1" max="10000">
+      </div>
+      <div class="lg-field" style="flex:1">
+        <label class="lg-label">Batch number</label>
+        <input class="lg-input" id="inviteBatch" type="number" value="1" min="1">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="tb-btn ghost" onclick="closeInviteModal()">Cancel</button>
+      <button class="tb-btn primary" id="inviteBtn" onclick="sendInviteBatch()">Send Batch</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────
+const API  = 'http://localhost:5000'; // ← change to your hosted URL
+const PER_PAGE = 50;
+
+// ── State ─────────────────────────────────────────────────────────────
+let token       = localStorage.getItem('aitelda-admin-token') || '';
+let currentPage = 1;
+let totalCount  = 0;
+let searchTimer = null;
+let globalStats = {};
+
+// ── Theme ─────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const h = document.documentElement;
+  const next = h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  h.setAttribute('data-theme', next);
+  localStorage.setItem('aitelda-theme', next);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ── View switching ────────────────────────────────────────────────────
+function showView(view) {
+  document.getElementById('viewList').style.display  = view === 'list'  ? '' : 'none';
+  document.getElementById('viewStats').style.display = view === 'stats' ? '' : 'none';
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  if (view === 'stats') loadStatsView();
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('lgEmail').value.trim();
+  const pw    = document.getElementById('lgPw').value;
+  const btn   = document.getElementById('lgBtn');
+  const err   = document.getElementById('lgErr');
+  err.style.display = 'none';
+
+  if (!email || !pw) { showErr('Email and password required.'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Logging in...';
+
+  try {
+    const r = await fetch(API + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw }),
+    });
+    const d = await r.json();
+    if (r.ok && d.data?.access_token) {
+      token = d.data.access_token;
+      localStorage.setItem('aitelda-admin-token', token);
+      document.getElementById('sbLoggedAs').textContent = d.data.user?.email || email;
+      showDashboard();
+    } else {
+      showErr(d.error || 'Login failed. Check your credentials.');
+    }
+  } catch(e) {
+    showErr('Cannot connect to backend. Is the server running at ' + API + '?');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Log In';
+  }
+}
+
+function showErr(msg) {
+  const err = document.getElementById('lgErr');
+  err.textContent = msg;
+  err.style.display = 'block';
+}
+
+function doLogout() {
+  localStorage.removeItem('aitelda-admin-token');
+  token = '';
+  document.getElementById('loginGate').style.display = 'flex';
+  document.getElementById('dashContent').style.display = 'none';
+  toast('Logged out.', 'success');
+}
+
+function showDashboard() {
+  document.getElementById('loginGate').style.display = 'none';
+  document.getElementById('dashContent').style.display = 'block';
+  loadStats();
+  loadPage(1);
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const r = await fetch(API + '/api/waitlist/stats');
+    const d = await r.json();
+    const stats = d.data || {};
+    globalStats = stats;
+
+    const total   = stats.total_registrants || 0;
+    const waiting = stats.by_status?.waiting || 0;
+    const invited = stats.by_status?.invited || 0;
+    const conv    = stats.by_status?.registered || 0;
+
+    document.getElementById('stTotal').textContent    = total.toLocaleString();
+    document.getElementById('stWaiting').textContent  = waiting.toLocaleString();
+    document.getElementById('stInvited').textContent  = invited.toLocaleString();
+    document.getElementById('stConverted').textContent = conv.toLocaleString();
+    document.getElementById('tbSub').textContent =
+      `${total.toLocaleString()} total · ${waiting.toLocaleString()} waiting · ${invited.toLocaleString()} invited`;
+  } catch(e) {
+    document.getElementById('tbSub').textContent = 'Could not load stats';
+  }
+}
+
+function loadStatsView() {
+  const stats = globalStats;
+  document.getElementById('stAndroid').textContent = (stats.by_device?.android || 0).toLocaleString();
+  document.getElementById('stIos').textContent     = (stats.by_device?.ios     || 0).toLocaleString();
+  document.getElementById('stBoth').textContent    = (stats.by_device?.both    || 0).toLocaleString();
+
+  const invited = stats.by_status?.invited || 0;
+  const conv    = stats.by_status?.registered || 0;
+  const rate    = invited > 0 ? Math.round((conv / invited) * 100) + '%' : '—';
+  document.getElementById('stConvRate').textContent = rate;
+
+  // Mini chart for daily signups
+  const daily = stats.daily_signups || [];
+  const chart = document.getElementById('miniChart');
+  chart.innerHTML = '';
+  if (daily.length > 0) {
+    const max = Math.max(...daily.map(d => d.signups), 1);
+    daily.forEach(d => {
+      const bar = document.createElement('div');
+      bar.className = 'mc-bar';
+      bar.style.height = Math.max(4, (d.signups / max) * 60) + 'px';
+      bar.title = `${d.day}: ${d.signups} signup${d.signups !== 1 ? 's' : ''}`;
+      chart.appendChild(bar);
+    });
+  } else {
+    chart.innerHTML = '<span style="color:var(--muted);font-family:\'Space Mono\',monospace;font-size:.62rem">No data yet</span>';
+  }
+}
+
+// ── Table ─────────────────────────────────────────────────────────────
+async function loadPage(page) {
+  if (page < 1) return;
+  currentPage = page;
+
+  const q      = document.getElementById('searchQ')?.value.trim() || '';
+  const status = document.getElementById('filterStatus')?.value || '';
+  const device = document.getElementById('filterDevice')?.value || '';
+  const offset = (page - 1) * PER_PAGE;
+
+  const params = new URLSearchParams({ limit: PER_PAGE, offset });
+  if (q)      params.set('q', q);
+  if (status) params.set('status', status);
+  if (device) params.set('device_type', device);
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;"><div class="skel" style="width:60%;margin:0 auto"></div></td></tr>';
+
+  try {
+    const r = await fetch(API + '/api/waitlist?' + params, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    if (r.status === 401) { doLogout(); return; }
+
+    const d = await r.json();
+    const rows  = d.data?.registrants || [];
+    totalCount  = d.data?.total || 0;
+
+    document.getElementById('filterCount').textContent =
+      totalCount.toLocaleString() + ' result' + (totalCount !== 1 ? 's' : '');
+
+    // Pagination
+    const totalPages = Math.ceil(totalCount / PER_PAGE);
+    document.getElementById('pgInfo').textContent =
+      `Page ${page} of ${totalPages || 1} · Showing ${rows.length} of ${totalCount.toLocaleString()}`;
+    document.getElementById('pgPrev').disabled = page <= 1;
+    document.getElementById('pgNext').disabled = page >= totalPages;
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No registrants found matching your filters.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map((r, i) => `
+      <tr>
+        <td class="t-pos">#${offset + i + 1}</td>
+        <td>
+          <div class="t-name">${esc(r.full_name)}</div>
+          ${r.wants_updates ? '<div style="font-size:.6rem;color:var(--accent);font-family:\'Space Mono\',monospace;margin-top:2px">📧 updates on</div>' : ''}
+        </td>
+        <td class="t-email">${esc(r.email)}</td>
+        <td class="t-phone">${r.phone ? esc(r.phone) : '<span style="opacity:.4">—</span>'}</td>
+        <td><span class="dev-badge ${r.device_type}">${r.device_type === 'both' ? '📱🍎' : r.device_type === 'ios' ? '🍎' : '📱'} ${r.device_type}</span></td>
+        <td><span class="st-badge ${r.status}">${r.status}</span></td>
+        <td class="t-date">${fmtDate(r.registered_at)}</td>
+        <td>
+          <div class="row-actions">
+            ${r.status === 'waiting' ? `<button class="row-btn" onclick="updateStatus(${r.id},'invited')">Invite</button>` : ''}
+            ${r.status === 'invited' ? `<button class="row-btn" onclick="updateStatus(${r.id},'registered')">Mark Registered</button>` : ''}
+            <button class="row-btn danger" onclick="deleteReg(${r.id}, '${esc(r.email)}')">✕</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+  } catch(e) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Error loading data. Is the backend server running?</td></tr>';
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => loadPage(1), 350);
+}
+
+function clearFilters() {
+  document.getElementById('searchQ').value = '';
+  document.getElementById('filterStatus').value = '';
+  document.getElementById('filterDevice').value = '';
+  loadPage(1);
+}
+
+// ── Status update ─────────────────────────────────────────────────────
+async function updateStatus(id, status) {
+  try {
+    const r = await fetch(API + `/api/waitlist/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ status }),
+    });
+    const d = await r.json();
+    if (r.ok) {
+      toast(`Status updated to "${status}"`, 'success');
+      loadPage(currentPage);
+      loadStats();
+    } else {
+      toast(d.error || 'Update failed', 'error');
+    }
+  } catch(e) {
+    toast('Network error', 'error');
+  }
+}
+
+// ── Delete ────────────────────────────────────────────────────────────
+async function deleteReg(id, email) {
+  if (!confirm(`Remove ${email} from the waitlist? This cannot be undone.`)) return;
+  try {
+    const r = await fetch(API + `/api/waitlist/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    const d = await r.json();
+    if (r.ok) {
+      toast(`${email} removed from waitlist`, 'success');
+      loadPage(currentPage);
+      loadStats();
+    } else {
+      toast(d.error || 'Delete failed', 'error');
+    }
+  } catch(e) {
+    toast('Network error', 'error');
+  }
+}
+
+// ── Invite Batch ──────────────────────────────────────────────────────
+function openInviteModal() { document.getElementById('inviteModal').classList.add('open'); }
+function closeInviteModal() { document.getElementById('inviteModal').classList.remove('open'); }
+
+async function sendInviteBatch() {
+  const count = parseInt(document.getElementById('inviteCount').value, 10) || 100;
+  const batch = parseInt(document.getElementById('inviteBatch').value, 10) || 1;
+  const btn   = document.getElementById('inviteBtn');
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  try {
+    const r = await fetch(API + '/api/waitlist/invite-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ count, batch_number: batch }),
+    });
+    const d = await r.json();
+    if (r.ok) {
+      toast(`✓ Batch ${batch}: ${d.data.invited.toLocaleString()} registrants marked as invited`, 'success');
+      closeInviteModal();
+      loadPage(1);
+      loadStats();
+      // Auto-suggest next batch number
+      document.getElementById('inviteBatch').value = batch + 1;
+    } else {
+      toast(d.error || 'Invite batch failed', 'error');
+    }
+  } catch(e) {
+    toast('Network error', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Batch';
+  }
+}
+
+// ── CSV Export ────────────────────────────────────────────────────────
+async function exportCSV() {
+  const status = document.getElementById('filterStatus')?.value || '';
+  const url = API + '/api/waitlist/export' + (status ? '?status=' + status : '');
+  try {
+    const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!r.ok) { toast('Export failed — are you logged in?', 'error'); return; }
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'aitelda-waitlist.csv';
+    a.click();
+    toast('CSV downloaded ✓', 'success');
+  } catch(e) {
+    toast('Network error during export', 'error');
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+      + ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  } catch { return iso.slice(0, 16); }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+if (token) {
+  // Try to reuse saved token
+  fetch(API + '/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(r => {
+      if (r.ok) return r.json().then(d => {
+        document.getElementById('sbLoggedAs').textContent = d.data?.email || '';
+        showDashboard();
+      });
+      // Token expired
+      localStorage.removeItem('aitelda-admin-token');
+      token = '';
+    })
+    .catch(() => { token = ''; });
+}
+
+// Close modal on overlay click
+document.getElementById('inviteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeInviteModal();
+});
+</script>
+</body>
+</html>

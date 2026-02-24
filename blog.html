@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<script>document.documentElement.setAttribute("data-theme", localStorage.getItem("aitelda-theme")||"dark");</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telco News & Blog — AI Data Meter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050508;--surface:#0c0c14;--border:#1a1a2e;--accent:#00e5a0;--accent2:#ff4d00;--accent3:#7b61ff;--text:#e8e8f0;--muted:#6b6b80;--card:#0f0f1a;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;cursor:none;min-height:100vh;}
+.cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
+.cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(0,229,160,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s;}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.022) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:rgba(5,5,8,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.02em;color:var(--text);text-decoration:none;}
+.logo span{color:var(--accent);}
+.nav-links{display:flex;gap:28px;list-style:none;}
+.nav-links a{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--muted);text-decoration:none;text-transform:uppercase;letter-spacing:.08em;transition:color .2s;}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);}
+.nav-back{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted);text-decoration:none;text-transform:uppercase;letter-spacing:.08em;transition:color .2s;}
+.nav-back:hover{color:var(--accent);}
+.blog-hero{padding:130px 60px 50px;position:relative;z-index:1;border-bottom:1px solid var(--border);}
+.blog-hero::before{content:'';position:absolute;top:-80px;right:-80px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,229,160,.05),transparent 70%);pointer-events:none;}
+.hero-tag{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.hero-tag::before{content:'';width:24px;height:1px;background:var(--accent);}
+.blog-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.8rem,5vw,5rem);font-weight:800;letter-spacing:-.04em;line-height:.9;margin-bottom:20px;}
+.blog-hero h1 em{font-style:normal;color:transparent;-webkit-text-stroke:1px var(--accent);}
+.blog-hero p{color:var(--muted);font-size:1.05rem;line-height:1.7;max-width:520px;}
+.breaking-banner{background:rgba(255,77,0,.06);border-bottom:1px solid rgba(255,77,0,.15);padding:10px 60px;display:flex;align-items:center;gap:14px;overflow:hidden;position:relative;z-index:1;}
+.breaking-tag{font-family:'Space Mono',monospace;font-size:.6rem;background:var(--accent2);color:#fff;padding:3px 10px;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;}
+.breaking-scroll{flex:1;overflow:hidden;}
+.breaking-text{font-family:'Space Mono',monospace;font-size:.66rem;color:var(--muted);white-space:nowrap;animation:scroll-txt 20s linear infinite;}
+@keyframes scroll-txt{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
+.blog-filters{padding:22px 60px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:64px;z-index:80;background:var(--bg);}
+.filter-btn{font-family:'Space Mono',monospace;font-size:.6rem;padding:6px 13px;border:1px solid var(--border);color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.08em;transition:all .2s;background:transparent;}
+.filter-btn.active,.filter-btn:hover{border-color:rgba(0,229,160,.3);color:var(--accent);background:rgba(0,229,160,.05);}
+.filter-search{margin-left:auto;display:flex;}
+.filter-search input{background:var(--card);border:1px solid var(--border);border-right:none;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:.86rem;padding:7px 14px;outline:none;width:220px;transition:border-color .2s;}
+.filter-search input:focus{border-color:var(--accent);}
+.filter-search input::placeholder{color:var(--muted);}
+.filter-search button{background:var(--accent);color:#000;border:none;padding:7px 14px;font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;cursor:pointer;text-transform:uppercase;}
+.blog-main{display:grid;grid-template-columns:1fr 300px;gap:28px;padding:40px 60px;position:relative;z-index:1;align-items:start;}
+.featured-post{background:var(--card);border:1px solid var(--border);margin-bottom:20px;overflow:hidden;cursor:pointer;transition:border-color .2s;}
+.featured-post:hover{border-color:rgba(0,229,160,.2);}
+.fp-image{height:240px;background:linear-gradient(135deg,#0c0c14,rgba(0,229,160,.07));display:flex;align-items:center;justify-content:center;font-size:5rem;border-bottom:1px solid var(--border);position:relative;}
+.fp-image::after{content:'FEATURED';position:absolute;top:18px;left:18px;font-family:'Space Mono',monospace;font-size:.58rem;color:var(--accent);background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.2);padding:3px 9px;letter-spacing:.12em;}
+.fp-content{padding:24px 28px;}
+.fp-meta{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.post-cat{font-family:'Space Mono',monospace;font-size:.58rem;padding:3px 8px;letter-spacing:.06em;text-transform:uppercase;}
+.post-cat.MTNN{background:rgba(255,189,46,.1);color:#ffbd2e;border:1px solid rgba(255,189,46,.2);}
+.post-cat.ncc{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.2);}
+.post-cat.Airetel{background:rgba(255,77,0,.1);color:var(--accent2);border:1px solid rgba(255,77,0,.2);}
+.post-cat.Glow{background:rgba(39,201,63,.1);color:#27c93f;border:1px solid rgba(39,201,63,.2);}
+.post-cat.industry{background:rgba(123,97,255,.1);color:var(--accent3);border:1px solid rgba(123,97,255,.2);}
+.post-cat.investigation{background:rgba(255,77,0,.14);color:var(--accent2);border:1px solid rgba(255,77,0,.28);}
+.post-date{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);}
+.fp-title{font-family:'Syne',sans-serif;font-size:1.55rem;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-bottom:10px;}
+.fp-excerpt{color:var(--muted);font-size:.92rem;line-height:1.75;margin-bottom:18px;}
+.fp-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.post-author{display:flex;align-items:center;gap:10px;}
+.author-av{width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;color:#000;flex-shrink:0;}
+.author-name{font-size:.84rem;font-weight:500;}
+.author-role{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);}
+.post-actions{display:flex;gap:7px;align-items:center;}
+.action-btn{display:flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);background:none;border:1px solid var(--border);padding:5px 10px;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.04em;}
+.action-btn:hover,.action-btn.liked{color:var(--accent2);border-color:rgba(255,77,0,.25);}
+.read-more{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:5px;transition:gap .2s;}
+.read-more:hover{gap:10px;}
+.posts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.post-card{background:var(--card);border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s;}
+.post-card:hover{border-color:rgba(0,229,160,.2);transform:translateY(-2px);}
+.pc-image{height:110px;background:linear-gradient(135deg,var(--surface),var(--card));display:flex;align-items:center;justify-content:center;font-size:2.2rem;border-bottom:1px solid var(--border);}
+.pc-body{padding:16px 18px;}
+.pc-meta{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+.pc-title{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:-.01em;line-height:1.3;margin-bottom:7px;}
+.pc-excerpt{color:var(--muted);font-size:.8rem;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.pc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
+.pc-stats{display:flex;gap:8px;}
+.pc-stat{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);}
+.like-btn{background:none;border:1px solid var(--border);font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);cursor:pointer;padding:4px 8px;transition:all .2s;}
+.like-btn:hover,.like-btn.liked{color:var(--accent2);border-color:rgba(255,77,0,.25);}
+.blog-sidebar{display:flex;flex-direction:column;gap:18px;position:sticky;top:130px;}
+.sidebar-widget{background:var(--card);border:1px solid var(--border);}
+.sw-header{padding:14px 18px;border-bottom:1px solid var(--border);}
+.sw-title{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;}
+.sw-body{padding:14px 18px;}
+.trend-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(26,26,46,.7);cursor:pointer;align-items:flex-start;transition:opacity .2s;}
+.trend-item:last-child{border-bottom:none;}
+.trend-item:hover{opacity:.75;}
+.ti-num{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--accent);min-width:18px;font-weight:700;}
+.ti-title{font-size:.82rem;font-weight:500;line-height:1.35;margin-bottom:2px;}
+.ti-meta{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);}
+.wl-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(26,26,46,.7);}
+.wl-item:last-child{border-bottom:none;}
+.wl-logo{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;font-family:'Syne',sans-serif;flex-shrink:0;}
+.nl-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:.88rem;padding:9px 12px;outline:none;transition:border-color .2s;display:block;margin-bottom:8px;}
+.nl-input:focus{border-color:var(--accent);}
+.nl-input::placeholder{color:var(--muted);}
+.nl-btn{width:100%;background:var(--accent);color:#000;font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;border:none;padding:10px;cursor:pointer;text-transform:uppercase;letter-spacing:.07em;transition:background .2s;margin-bottom:6px;}
+.nl-btn:hover{background:#00ffa8;}
+.nl-note{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);line-height:1.5;}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(5,5,8,.96);z-index:200;display:none;overflow-y:auto;backdrop-filter:blur(10px);}
+.modal-overlay.open{display:block;}
+.modal{max-width:740px;margin:70px auto 80px;background:var(--surface);border:1px solid var(--border);position:relative;}
+.modal-close{position:fixed;top:22px;right:28px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:.7rem;cursor:pointer;font-family:'Space Mono',monospace;transition:color .2s;z-index:10;padding:8px 14px;letter-spacing:.06em;text-transform:uppercase;}
+.modal-close:hover{color:var(--accent);}
+.modal-img{height:200px;background:linear-gradient(135deg,var(--card),rgba(0,229,160,.07));display:flex;align-items:center;justify-content:center;font-size:3.5rem;border-bottom:1px solid var(--border);}
+.modal-body{padding:30px 36px;}
+.modal-body h2{font-family:'Syne',sans-serif;font-size:1.65rem;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-bottom:14px;}
+.modal-meta{display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+.modal-content p{color:var(--muted);font-size:.93rem;line-height:1.85;margin-bottom:16px;}
+.modal-content h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin:22px 0 10px;color:var(--text);}
+.modal-content blockquote{border-left:3px solid var(--accent);padding:12px 18px;background:rgba(0,229,160,.04);margin:18px 0;}
+.modal-content blockquote p{margin:0;font-style:italic;}
+.comments-section{border-top:1px solid var(--border);padding:24px 36px;}
+.comments-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:18px;}
+.comment-form{background:var(--card);border:1px solid var(--border);padding:18px;margin-bottom:20px;}
+.comment-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:.88rem;padding:11px 13px;outline:none;min-height:76px;resize:vertical;transition:border-color .2s;display:block;margin-bottom:10px;}
+.comment-input:focus{border-color:var(--accent);}
+.comment-input::placeholder{color:var(--muted);}
+.comment-submit{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;padding:8px 18px;background:var(--accent);color:#000;border:none;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;transition:background .2s;float:right;}
+.comment-submit:hover{background:#00ffa8;}
+.comment-item{padding:16px 0;border-bottom:1px solid rgba(26,26,46,.7);clear:both;}
+.comment-item:last-child{border-bottom:none;}
+.comment-header{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.comment-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.65rem;flex-shrink:0;}
+.comment-name{font-size:.84rem;font-weight:500;}
+.comment-time{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);margin-left:auto;}
+.comment-body{font-size:.86rem;color:var(--muted);line-height:1.7;padding-left:35px;}
+.comment-foot{display:flex;gap:10px;padding-left:35px;margin-top:7px;}
+.comment-like{background:none;border:none;font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);cursor:pointer;transition:color .2s;display:flex;align-items:center;gap:4px;}
+.comment-like:hover,.comment-like.liked{color:var(--accent2);}
+.comment-reply-btn{background:none;border:none;font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);cursor:pointer;transition:color .2s;text-transform:uppercase;letter-spacing:.06em;}
+.comment-reply-btn:hover{color:var(--accent);}
+.team-badge{font-family:'Space Mono',monospace;font-size:.52rem;color:var(--accent);background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.2);padding:2px 6px;margin-left:4px;}
+.user-badge{font-family:'Space Mono',monospace;font-size:.52rem;color:var(--accent3);background:rgba(123,97,255,.1);border:1px solid rgba(123,97,255,.2);padding:2px 6px;margin-left:4px;}
+.post-action-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 36px;border-top:1px solid var(--border);background:var(--card);}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+@media(max-width:1024px){.blog-main{grid-template-columns:1fr;}.posts-grid{grid-template-columns:1fr;}.blog-sidebar{position:static;}}
+@media(max-width:768px){nav{padding:14px 20px;}.nav-links{display:none;}.blog-hero{padding:108px 20px 32px;}.breaking-banner,.blog-filters{padding:10px 20px;}.blog-main{padding:24px 20px;}.modal-body,.comments-section{padding:20px;}.post-action-bar{padding:14px 20px;}}
+
+  /* ═══════════════════════════════════════════════
+     LIGHT MODE — AiTelDa
+     Inverts all surface, background, text, and border
+     variables while preserving brand accent colours.
+  ═══════════════════════════════════════════════ */
+  [data-theme="light"] {
+    --bg:      #f4f4f8;
+    --surface: #ffffff;
+    --border:  #d8d8e8;
+    --text:    #0e0e18;
+    --muted:   #6b6b80;
+    --card:    #ffffff;
+    /* accent colours remain unchanged */
+    --accent:  #00c785;
+    --accent2: #ff4d00;
+    --accent3: #6d50f0;
+  }
+
+  /* Light-mode specific overrides */
+  [data-theme="light"] body {
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* Grid lines — subtler on light */
+  [data-theme="light"] body::after {
+    background-image:
+      linear-gradient(rgba(0,199,133,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,199,133,0.08) 1px, transparent 1px);
+  }
+
+  /* Nav glass */
+  [data-theme="light"] nav,
+  [data-theme="light"] .sidebar {
+    background: rgba(244,244,248,0.94) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Cards / surfaces */
+  [data-theme="light"] .card,
+  [data-theme="light"] .stat-card,
+  [data-theme="light"] .widget,
+  [data-theme="light"] .section-card,
+  [data-theme="light"] .comp-card,
+  [data-theme="light"] .feature-card,
+  [data-theme="light"] .tool-card,
+  [data-theme="light"] .val-card,
+  [data-theme="light"] .mission-point,
+  [data-theme="light"] .faq-item,
+  [data-theme="light"] .contact-card,
+  [data-theme="light"] .article-card,
+  [data-theme="light"] .diag-card,
+  [data-theme="light"] .diag-section,
+  [data-theme="light"] .err-terminal,
+  [data-theme="light"] .mini-terminal,
+  [data-theme="light"] .terminal,
+  [data-theme="light"] .code-block,
+  [data-theme="light"] .formula-box,
+  [data-theme="light"] .side-card,
+  [data-theme="light"] .qa,
+  [data-theme="light"] .ks-widget,
+  [data-theme="light"] .compare-col,
+  [data-theme="light"] .step-block,
+  [data-theme="light"] .bill-col,
+  [data-theme="light"] .pdf-card,
+  [data-theme="light"] .ncc-rights,
+  [data-theme="light"] .pipeline-step,
+  [data-theme="light"] .pipe-content,
+  [data-theme="light"] .meter-col,
+  [data-theme="light"] .anom-item,
+  [data-theme="light"] .blocked-item {
+    background: var(--card) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Input fields */
+  [data-theme="light"] input,
+  [data-theme="light"] textarea,
+  [data-theme="light"] select,
+  [data-theme="light"] .input-wrap input {
+    background: #f0f0f6 !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+  }
+  [data-theme="light"] input::placeholder,
+  [data-theme="light"] textarea::placeholder {
+    color: #9999aa !important;
+  }
+  [data-theme="light"] input:focus,
+  [data-theme="light"] textarea:focus {
+    border-color: var(--accent) !important;
+    background: #ffffff !important;
+  }
+
+  /* Sidebar */
+  [data-theme="light"] .sidebar {
+    background: #ffffff !important;
+    border-color: var(--border) !important;
+  }
+  [data-theme="light"] .sidebar-logo {
+    border-color: var(--border) !important;
+  }
+  [data-theme="light"] .nav-item:hover {
+    background: rgba(0,199,133,0.06) !important;
+  }
+  [data-theme="light"] .nav-item.active {
+    background: rgba(0,199,133,0.1) !important;
+  }
+
+  /* Top bars */
+  [data-theme="light"] .topbar,
+  [data-theme="light"] .ks-bar,
+  [data-theme="light"] .status-bar,
+  [data-theme="light"] .chapter-nav,
+  [data-theme="light"] .ch-nav,
+  [data-theme="light"] .tab-nav {
+    background: rgba(244,244,248,0.97) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Muted text stays readable */
+  [data-theme="light"] .muted,
+  [data-theme="light"] [class*="muted"] { color: #6b6b80 !important; }
+
+  /* Skeleton loader */
+  [data-theme="light"] .skel {
+    background: linear-gradient(90deg,#e0e0ee 25%,#eeeef8 50%,#e0e0ee 75%);
+    background-size: 200% 100%;
+  }
+
+  /* Toggle widget itself */
+  [data-theme="light"] .theme-toggle-btn { border-color: var(--border); }
+  [data-theme="light"] .theme-toggle-btn .tt-track { background: #e0e0ee; }
+  [data-theme="light"] .theme-toggle-btn .tt-icon-sun { opacity: 1; }
+  [data-theme="light"] .theme-toggle-btn .tt-icon-moon { opacity: 0.35; }
+
+  /* Dark mode toggle defaults */
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-moon { opacity: 1; }
+  [data-theme="dark"] .theme-toggle-btn .tt-icon-sun  { opacity: 0.35; }
+
+  /* Noise overlay lighter in light mode */
+  [data-theme="light"] body::before { opacity: 0.15; }
+
+  /* Visual panels on auth pages */
+  [data-theme="light"] .visual-panel {
+    background: linear-gradient(135deg, #0e1a2e 0%, #0a1220 100%) !important;
+  }
+
+  /* Blog filter bar */
+  [data-theme="light"] .blog-filters,
+  [data-theme="light"] .breaking-banner {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Modals */
+  [data-theme="light"] .modal-overlay { background: rgba(244,244,248,0.92) !important; }
+  [data-theme="light"] .modal-panel { background: #ffffff !important; border-color: var(--border) !important; }
+
+  /* Tables */
+  [data-theme="light"] .dtable th { border-color: var(--border) !important; }
+  [data-theme="light"] .dtable td { border-color: #ebebf5 !important; }
+  [data-theme="light"] .dtable tr:hover td { background: rgba(0,199,133,0.03) !important; }
+
+  /* Scrollbars */
+  [data-theme="light"] ::-webkit-scrollbar-track { background: #f0f0f6; }
+  [data-theme="light"] ::-webkit-scrollbar-thumb { background: #c8c8d8; }
+
+  /* Transition for smooth switch */
+  *, *::before, *::after {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  }
+  /* But don't slow down animations */
+  .particle, .cursor, .cursor-ring,
+  [class*="anim"], [class*="float"], [class*="spin"],
+  .skel { transition: none !important; }
+
+  /* ── Theme Toggle Button ─────────────────────────── */
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 6px 11px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    transition: border-color 0.2s, color 0.2s !important;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .theme-toggle-btn:hover { color: var(--accent); border-color: rgba(0,229,160,0.3); }
+  .tt-icons { display: flex; align-items: center; gap: 4px; font-size: 0.9rem; }
+  .tt-icon-sun, .tt-icon-moon { line-height: 1; transition: opacity 0.3s !important; }
+
+</style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <a href="index.html" class="logo">AI<span>Data</span>Meter</a>
+  <ul class="nav-links">
+   <li><a href="how-it-works.html">How It Works</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="diagnostics.html">Diagnostic Tools</a></li>
+    <li><a href="help.html">Need Support?</a></li>
+    <li><a href="blog.html">Trend</a></li>
+  </ul>
+  <a href="dashboard.html" class="nav-back">← Dashboard</a>
+  <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="tt-icons"><span class="tt-icon-sun">☀</span><span class="tt-icon-moon">🌙</span></span></button>
+</nav>
+
+<div class="blog-hero">
+  <div class="hero-tag">Telco Intelligence</div>
+  <h1>News, <em>investigations</em><br>&amp; consumer wins.</h1>
+  <p>Independent reporting on telecoms industry — billing practices, NCC rulings, consumer victories, and data rights.</p>
+</div>
+
+<div class="breaking-banner">
+  <div class="breaking-tag">Breaking</div>
+  <div class="breaking-scroll">
+    <div class="breaking-text">NCC opens investigation into MTNNN background data consumption following 12,000+ AI Data Meter reports &nbsp;·&nbsp; Airetel fined ₦50M for billing irregularities Q4 2025 &nbsp;·&nbsp; Gloww zero-rating promise contradicted by AI Data Meter data &nbsp;·&nbsp; 90mobile updates billing API after consumer pressure &nbsp;·&nbsp; NCC releases Q1 2026 QoS report — download available</div>
+  </div>
+</div>
+
+<div class="blog-filters">
+  <button class="filter-btn active" onclick="filterPosts('all',this)">All</button>
+  <button class="filter-btn" onclick="filterPosts('investigation',this)">🔍 Investigations</button>
+  <button class="filter-btn" onclick="filterPosts('ncc',this)">⚖️ NCC</button>
+  <button class="filter-btn" onclick="filterPosts('MTNN',this)">MTNNN</button>
+  <button class="filter-btn" onclick="filterPosts('Airetel',this)">Airetel</button>
+  <button class="filter-btn" onclick="filterPosts('Glow',this)">Gloww</button>
+  <button class="filter-btn" onclick="filterPosts('industry',this)">Industry</button>
+  <div class="filter-search">
+    <input type="text" placeholder="Search articles…" oninput="searchPosts(this.value)" id="searchInput">
+    <button onclick="searchPosts(document.getElementById('searchInput').value)">Search</button>
+  </div>
+</div>
+
+<div class="blog-main">
+  <div id="articlesCol">
+    <!-- FEATURED -->
+    <div class="featured-post reveal" onclick="openArticle(0)">
+      <div class="fp-image">📡</div>
+      <div class="fp-content">
+        <div class="fp-meta">
+          <span class="post-cat investigation">Investigation</span>
+          <span class="post-cat MTNN">MTNNN Nigeria</span>
+          <span class="post-date">Feb 14, 2026</span>
+          <span style="font-family:'Space Mono',monospace;font-size:.56rem;color:var(--accent)">📖 8 min</span>
+        </div>
+        <div class="fp-title">MTNNN Nigeria's background data drain: We measured 38 months of billing data so you don't have to</div>
+        <div class="fp-excerpt">AI Data Meter's anomaly engine analysed 1.2 million packet sessions across 8,400 MTNNN subscribers. The finding: a 23.7% average discrepancy between device-measured data and MTNNN billing — peak consumption 2–5am while users sleep.</div>
+        <div class="fp-footer">
+          <div class="post-author"><div class="author-av">A</div><div><div class="author-name">AI Data Meter Research Team</div><div class="author-role">Data Intelligence</div></div></div>
+          <div class="post-actions">
+            <button class="action-btn" id="fl0" onclick="event.stopPropagation();likePost(0)">❤️ <span id="fc0">4,218</span></button>
+            <button class="action-btn" onclick="event.stopPropagation();openArticle(0)">💬 247</button>
+            <a class="read-more" onclick="event.preventDefault();openArticle(0)" href="#">Read investigation →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="posts-grid" id="postsGrid"></div>
+    <div style="text-align:center;padding:20px 0 8px;">
+      <button style="font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);background:none;border:1px solid var(--border);padding:11px 28px;cursor:pointer;text-transform:uppercase;letter-spacing:.08em;transition:all .2s;" onmouseover="this.style.color='var(--accent)';this.style.borderColor='rgba(0,229,160,.3)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'" onclick="this.textContent='No more articles';this.disabled=true;this.style.opacity='.4'">Load More Articles</button>
+    </div>
+  </div>
+
+  <aside class="blog-sidebar">
+    <div class="sidebar-widget reveal">
+      <div class="sw-header"><div class="sw-title">📈 Trending Now</div></div>
+      <div class="sw-body" id="trendingList"></div>
+    </div>
+    <div class="sidebar-widget reveal">
+      <div class="sw-header"><div class="sw-title">🔭 Telco Watchlist</div></div>
+      <div class="sw-body">
+        <div class="wl-item"><div class="wl-logo" style="background:rgba(255,189,46,.1);color:#ffbd2e">M</div><div style="flex:1;font-size:.84rem;font-weight:500">MTNNN Nigeria</div><div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:800;color:var(--accent2)">D-</div></div>
+        <div class="wl-item"><div class="wl-logo" style="background:rgba(255,77,0,.1);color:var(--accent2)">A</div><div style="flex:1;font-size:.84rem;font-weight:500">Airetel Nigeria</div><div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:800;color:#ffbd2e">C+</div></div>
+        <div class="wl-item"><div class="wl-logo" style="background:rgba(39,201,63,.1);color:#27c93f">G</div><div style="flex:1;font-size:.84rem;font-weight:500">Gloww Mobile</div><div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:800;color:#ffbd2e">C</div></div>
+        <div class="wl-item"><div class="wl-logo" style="background:rgba(123,97,255,.1);color:var(--accent3)">9</div><div style="flex:1;font-size:.84rem;font-weight:500">90mobile</div><div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:800;color:var(--accent)">B-</div></div>
+        <div style="font-family:'Space Mono',monospace;font-size:.56rem;color:var(--muted);margin-top:10px;line-height:1.5">Billing integrity scores from 50,000+ user sessions. Updated monthly.</div>
+      </div>
+    </div>
+    <div class="sidebar-widget reveal">
+      <div class="sw-header"><div class="sw-title">📬 Weekly Newsletter</div></div>
+      <div class="sw-body">
+        <p style="color:var(--muted);font-size:.82rem;line-height:1.6;margin-bottom:12px">Telco news, NCC alerts, and consumer wins. Once a week.</p>
+        <input class="nl-input" type="email" placeholder="your@email.ng" id="nlEmail">
+        <button class="nl-btn" onclick="subscribeNL()">Subscribe Free →</button>
+        <div class="nl-note">No spam. Unsubscribe any time.</div>
+      </div>
+    </div>
+    <div class="sidebar-widget reveal">
+      <div class="sw-header"><div class="sw-title">🏆 Consumer Wins</div></div>
+      <div class="sw-body" id="winsWidget"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- ARTICLE MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeArticle()">
+  <button class="modal-close" onclick="closeArticle()">✕ close</button>
+  <div class="modal">
+    <div class="modal-img" id="modalImg">📡</div>
+    <div class="modal-body">
+      <div class="modal-meta" id="modalMeta"></div>
+      <h2 id="modalTitle"></h2>
+      <div class="modal-content" id="modalContent"></div>
+    </div>
+    <div class="comments-section">
+      <div class="comments-title">Comments (<span id="commentCount">0</span>)</div>
+      <div class="comment-form">
+        <textarea class="comment-input" id="commentInput" placeholder="Share your experience with this issue. Have you seen similar patterns with your telco?"></textarea>
+        <button class="comment-submit" onclick="submitComment()">Post Comment →</button>
+      </div>
+      <div id="commentsList"></div>
+    </div>
+    <div class="post-action-bar">
+      <div style="display:flex;gap:8px;">
+        <button class="action-btn" id="modalLikeBtn" onclick="modalLike()">❤️ <span id="modalLikeCount">0</span> likes</button>
+        <button class="action-btn" onclick="shareArticle()">↗ Share</button>
+      </div>
+      <button onclick="closeArticle()" style="font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);background:none;border:none;cursor:pointer;text-transform:uppercase;letter-spacing:.08em;transition:color .2s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">← Back to blog</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const cursor=document.getElementById('cursor'),ring=document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px';});
+(function a(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(a);})();
+document.querySelectorAll('a,button,input,textarea').forEach(el=>{el.addEventListener('mouseenter',()=>{ring.style.width='50px';ring.style.height='50px';});el.addEventListener('mouseleave',()=>{ring.style.width='36px';ring.style.height='36px';});});
+
+const articles=[
+  {id:0,title:"MTNNN Nigeria's background data drain: We measured 38 months of billing data",cats:['investigation','MTNN'],icon:'📡',date:'Feb 14, 2026',author:'AI Data Meter Research Team',authorRole:'Data Intelligence',likes:4218,comments:247,readTime:'8 min',excerpt:'An in-depth analysis of 1.2 million packet sessions reveals systematic over-billing patterns.',
+   content:`<p>Between September 2023 and February 2026, AI Data Meter analysed <strong>1,247,832 packet monitoring sessions</strong> across 8,412 MTNNN Nigeria subscribers. The methodology: compare what each device recorded vs. what MTNNN billed — to the byte.</p><h3>What we found</h3><p>Median variance was <strong>23.7%</strong>. The 95th percentile variance was 67.4%. The gap isn't random noise.</p><blockquote><p>"The variance spikes during 2–5am, correlates with idle screen states, and is largest for users with TikTok, Facebook, and Google Mobile Services installed."</p></blockquote><h3>The 2–5am window</h3><p><strong>61% of all anomalous billing variance occurs between 2:00am and 5:00am WAT</strong>, when users are sleeping and screens are off. Background app consumption continues unabated.</p><h3>MTNN's response</h3><p>MTNN declined to comment on our methodology. Our legal team submitted a formal data request under NCC General Consumer Code §5.3 requesting raw session-level billing records.</p><h3>What you can do</h3><p>Enable AI Data Meter's Kill Switch to block phantom background data during screen-off periods. Kill Switch users in our cohort show a <strong>31% reduction in billing variance</strong>.</p>`},
+  {id:1,title:"Airetel Nigeria fined ₦50M by NCC: What the ruling means for your bill",cats:['ncc','Airetel'],icon:'⚖️',date:'Feb 10, 2026',author:'Chidi Okonkwo',authorRole:'Consumer Rights Reporter',likes:2891,comments:134,readTime:'5 min',excerpt:"The NCC's landmark ruling sets a precedent for data billing accountability across all telcos.",
+   content:`<p>On February 8, 2026, the NCC fined Airetel Nigeria Limited <strong>₦50,000,000</strong> for billing irregularities affecting an estimated 340,000 subscribers over six months.</p><h3>What triggered the ruling</h3><p>Consumer advocacy groups — citing AI Data Meter forensic reports — filed a formal complaint in October 2025, documenting a 19.4% average overbilling rate on Airetel's 4G network.</p><h3>The rounding trick</h3><p>The NCC found Airetel was rounding data consumption <em>up</em> to the nearest 50KB per session — always. This resulted in consistent over-billing of ₦8–₦47 per session, accumulating to hundreds of naira monthly.</p><blockquote><p>The commission ordered immediate cessation, full refunds, and the ₦50M penalty under NCC General Consumer Code §5.3.</p></blockquote><h3>Claim your refund</h3><p>Airetel subscribers on any plan between June–November 2025 can check eligibility by dialling <strong>*141#</strong>.</p>`},
+  {id:2,title:"Kill Switch saves AI Data Meter users ₦180M in January 2026 alone",cats:['industry'],icon:'🛡️',date:'Feb 7, 2026',author:'Funmi Adeleke',authorRole:'Product Analytics',likes:2234,comments:89,readTime:'4 min',excerpt:"Our aggregated savings data from January is in — and the numbers are staggering.",
+   content:`<p>January 2026 was AI Data Meter's strongest month. The Kill Switch collectively <strong>blocked 47.8 terabytes</strong> of phantom background data — translating to an estimated <strong>₦180.4M in prevented over-billing</strong>.</p><h3>Who benefits most</h3><p>TikTok, Facebook, and Instagram together accounted for 74% of all phantom data blocked. The average Kill Switch user saved <strong>₦3,240 in January</strong>.</p><blockquote><p>"Turning on the Kill Switch is the single most impactful action you can take right now. The evidence is in the numbers." — AI Data Meter CEO</p></blockquote>`},
+  {id:3,title:"NCC to all telcos: Publish your billing methodology or face audit",cats:['ncc'],icon:'📋',date:'Feb 3, 2026',author:'AI Data Meter News Desk',authorRole:'Editorial',likes:1876,comments:203,readTime:'3 min',excerpt:"A significant NCC directive could force telcos to open their billing black box for the first time.",
+   content:`<p>An NCC circular dated January 30, 2026 directed all mobile operators to submit technical documentation of their data billing measurement methodology within 60 days.</p><h3>Why this matters</h3><p>For the first time, the NCC requires telcos to publicly justify <em>where</em> and <em>how</em> they measure data. This is a direct response to consumer-generated evidence — including AI Data Meter forensic reports.</p><blockquote><p>"This is the transparency the consumer rights movement has demanded for years. The NCC is listening." — Consumer Rights Advocacy Group Nigeria</p></blockquote>`},
+  {id:4,title:"90mobile billing API update: 30 days of before/after AI Data Meter data",cats:['industry'],icon:'🔄',date:'Jan 28, 2026',author:'Taiwo Babatunde',authorRole:'Technical Reporter',likes:987,comments:67,readTime:'6 min',excerpt:"We ran comparative monitoring across 1,200 users before and after 90mobile's January update.",
+   content:`<p>90mobile pushed a billing API update on January 15, 2026. We had 1,200 AI Data Meter users run 30-day comparative monitoring.</p><h3>What improved</h3><p>Median billing variance dropped from <strong>11.2% to 7.8%</strong> — still above our 5% dispute threshold, but a meaningful improvement. Idle-period billing discrepancies fell 34%.</p><h3>What didn't change</h3><p>50KB session rounding remains. Background social media billing is still inconsistent with device measurements.</p>`},
+  {id:5,title:"TikTok's idle drain is Nigeria's #1 data thief — here's the proof",cats:['investigation','industry'],icon:'🎵',date:'Jan 22, 2026',author:'AI Data Meter Research Team',authorRole:'Data Intelligence',likes:5432,comments:412,readTime:'7 min',excerpt:"200,000+ sessions. One clear conclusion: TikTok accounts for 38% of all phantom data in Nigeria.",
+   content:`<p>Across 200,000 monitoring sessions on all four major Nigerian networks, <strong>TikTok accounts for 38% of all phantom background data consumption</strong> detected by AI Data Meter.</p><h3>The numbers</h3><p>Median TikTok idle consumption rate during screen-off periods: <strong>+1,730% above baseline</strong>. Worst case observed: 340MB consumed between 2:14am and 4:47am on a phone idle since 11pm.</p><blockquote><p>"TikTok's background behaviour is the most aggressive we've measured across 400+ apps in our dataset." — AI Data Meter Research Team</p></blockquote><h3>What you can do</h3><p>In your AI Data Meter dashboard → App Breakdown → click Block next to TikTok. Background data is blocked while the app continues to work normally on-screen.</p>`},
+];
+
+const trending=[
+  {title:"Airetel's ₦50M fine explained",views:'3.2k',time:'2 days ago',id:1},
+  {title:"How Kill Switch saves ₦3,000+/month",views:'2.8k',time:'3 days ago',id:2},
+  {title:"NCC orders billing transparency",views:'2.1k',time:'5 days ago',id:3},
+  {title:"90mobile billing update results",views:'1.4k',time:'1 week ago',id:4},
+  {title:"TikTok: Nigeria's #1 data thief",views:'1.1k',time:'1 week ago',id:5},
+];
+document.getElementById('trendingList').innerHTML=trending.map((t,i)=>`<div class="trend-item" onclick="openArticle(${t.id})"><div class="ti-num">0${i+1}</div><div><div class="ti-title">${t.title}</div><div class="ti-meta">${t.views} views · ${t.time}</div></div></div>`).join('');
+
+const wins=[{n:'Amaka O.',t:'MTNN',a:'₦4,200'},{n:'Kola A.',t:'Airetel',a:'₦2,700'},{n:'Ngozi E.',t:'MTNN',a:'₦6,100'},{n:'Bello M.',t:'GH',a:'₦1,850'}];
+document.getElementById('winsWidget').innerHTML=wins.map((w,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;${i<wins.length-1?'border-bottom:1px solid rgba(26,26,46,.6)':''}"><span>🏆</span><div style="flex:1"><div style="font-size:.82rem;font-weight:500">${w.n} vs ${w.t}</div></div><div style="font-family:'Syne',sans-serif;font-size:.92rem;font-weight:800;color:var(--accent)">${w.a}</div></div>`).join('');
+
+let likedPosts=new Set(), activeFilter='all';
+function renderCards(filter='all',search=''){
+  const f=articles.slice(1).filter(a=>{
+    const mf=filter==='all'||a.cats.includes(filter);
+    const ms=!search||a.title.toLowerCase().includes(search.toLowerCase())||a.excerpt.toLowerCase().includes(search.toLowerCase());
+    return mf&&ms;
+  });
+  document.getElementById('postsGrid').innerHTML=f.length===0?`<div style="text-align:center;padding:40px;color:var(--muted);font-family:'Space Mono',monospace;font-size:.7rem;grid-column:span 2">No articles match.</div>`:
+    f.map(a=>`<div class="post-card" onclick="openArticle(${a.id})">
+      <div class="pc-image">${a.icon}</div>
+      <div class="pc-body">
+        <div class="pc-meta">${a.cats.map(c=>`<span class="post-cat ${c}">${c}</span>`).join('')}<span class="post-date">${a.date}</span></div>
+        <div class="pc-title">${a.title}</div>
+        <div class="pc-excerpt">${a.excerpt}</div>
+        <div class="pc-footer"><div class="pc-stats"><span class="pc-stat">❤️ ${a.likes.toLocaleString()}</span><span class="pc-stat">💬 ${a.comments}</span><span class="pc-stat">📖 ${a.readTime}</span></div>
+        <button class="like-btn ${likedPosts.has(a.id)?'liked':''}" onclick="event.stopPropagation();likePost(${a.id})">❤️ ${likedPosts.has(a.id)?'Liked':'Like'}</button></div>
+      </div></div>`).join('');
+}
+renderCards();
+
+function filterPosts(f,btn){activeFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(f,document.getElementById('searchInput').value);}
+function searchPosts(q){renderCards(activeFilter,q);}
+function likePost(id){likedPosts.has(id)?likedPosts.delete(id):likedPosts.add(id);renderCards(activeFilter);if(id===0){const b=document.getElementById('fl0');b.className='action-btn'+(likedPosts.has(0)?' liked':'');document.getElementById('fc0').textContent=(likedPosts.has(0)?4219:4218).toLocaleString();}}
+
+// MODAL
+const defaultComments=[
+  {name:'Adaeze Nwosu',role:'user',av:'A',avColor:'var(--accent)',avTxt:'#000',time:'2 days ago',body:"This confirms what I've been experiencing. MTNN charged 4.2GB last month, my phone shows 2.8GB. Filed a dispute yesterday using AI Data Meter.",likes:47,liked:false},
+  {name:'Emeka Eze',role:'',av:'E',avColor:'var(--accent3)',avTxt:'#000',time:'3 days ago',body:"Does the Kill Switch affect WhatsApp calls? I need background data for incoming calls but don't want TikTok draining everything overnight.",likes:23,liked:false},
+  {name:'AI Data Meter Support',role:'team',av:'T',avColor:'var(--accent)',avTxt:'#000',time:'3 days ago',body:"@Emeka — great question! The Kill Switch uses app-level blocking. You can whitelist WhatsApp in Settings > Kill Switch > Whitelist. Call notifications will still come through.",likes:31,liked:false},
+  {name:'Kemi Adewale',role:'user',av:'K',avColor:'var(--border)',avTxt:'var(--muted)',time:'4 days ago',body:"38 months of data is serious research. Sharing this everywhere. We've been getting robbed in plain sight.",likes:89,liked:false},
+];
+let currentComments=[...defaultComments], currentId=null, mLiked=false;
+
+function openArticle(id){
+  const a=articles[id]; currentId=id;
+  document.getElementById('modalImg').textContent=a.icon;
+  document.getElementById('modalTitle').textContent=a.title;
+  document.getElementById('modalMeta').innerHTML=a.cats.map(c=>`<span class="post-cat ${c}">${c}</span>`).join('')+`<span class="post-date">${a.date}</span><span style="font-family:'Space Mono',monospace;font-size:.56rem;color:var(--accent)">📖 ${a.readTime}</span>`;
+  document.getElementById('modalContent').innerHTML=a.content;
+  mLiked=likedPosts.has(id);
+  document.getElementById('modalLikeCount').textContent=(a.likes+(mLiked?1:0)).toLocaleString();
+  document.getElementById('modalLikeBtn').className='action-btn'+(mLiked?' liked':'');
+  renderComments(); document.getElementById('modalOverlay').classList.add('open'); document.body.style.overflow='hidden';
+  document.getElementById('modalOverlay').scrollTop=0;
+}
+function closeArticle(){document.getElementById('modalOverlay').classList.remove('open');document.body.style.overflow='';}
+
+function renderComments(){
+  document.getElementById('commentCount').textContent=currentComments.length;
+  document.getElementById('commentsList').innerHTML=currentComments.map((c,i)=>`<div class="comment-item">
+    <div class="comment-header"><div class="comment-av" style="background:${c.avColor};color:${c.avTxt}">${c.av}</div>
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="comment-name">${c.name}</span>${c.role==='team'?'<span class="team-badge">AI Data Meter Team</span>':c.role==='user'?'<span class="user-badge">Verified User</span>':''}</div>
+    <span class="comment-time">${c.time}</span></div>
+    <div class="comment-body">${c.body}</div>
+    <div class="comment-foot">
+      <button class="comment-like ${c.liked?'liked':''}" onclick="likeComment(${i})">❤️ ${c.likes}</button>
+      <button class="comment-reply-btn" onclick="replyTo('${c.name}')">Reply</button>
+    </div></div>`).join('');
+}
+
+function likeComment(i){currentComments[i].liked?currentComments[i].likes--:currentComments[i].likes++;currentComments[i].liked=!currentComments[i].liked;renderComments();}
+function replyTo(name){const inp=document.getElementById('commentInput');inp.value=`@${name} `;inp.focus();inp.scrollIntoView({behavior:'smooth',block:'center'});}
+
+function submitComment(){
+  const inp=document.getElementById('commentInput');const txt=inp.value.trim();if(!txt)return;
+  const user=JSON.parse(localStorage.getItem('AI Data Meter_user')||'{}');const name=user.full_name||'Anonymous';
+  currentComments.unshift({name,role:'user',av:name.charAt(0).toUpperCase(),avColor:'var(--accent3)',avTxt:'#000',time:'Just now',body:txt,likes:0,liked:false});
+  inp.value='';renderComments();
+}
+
+function modalLike(){
+  mLiked=!mLiked;if(mLiked)likedPosts.add(currentId);else likedPosts.delete(currentId);
+  const a=articles[currentId];document.getElementById('modalLikeCount').textContent=(a.likes+(mLiked?1:0)).toLocaleString();
+  document.getElementById('modalLikeBtn').className='action-btn'+(mLiked?' liked':'');renderCards(activeFilter);
+}
+function shareArticle(){if(navigator.share)navigator.share({title:articles[currentId].title,url:location.href}).catch(()=>{});else navigator.clipboard.writeText(location.href).then(()=>alert('Link copied!')).catch(()=>{});}
+function subscribeNL(){const em=document.getElementById('nlEmail').value;if(!em||!em.includes('@')){alert('Please enter a valid email');return;}const b=event.target;b.textContent='Subscribed! ✓';setTimeout(()=>{b.textContent='Subscribe Free →';document.getElementById('nlEmail').value='';},2500);}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeArticle();});
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+
+<script>
+// ── AiTelDa Theme System ─────────────────────────────────────────────
+(function() {
+  var saved = localStorage.getItem('aitelda-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var cur = html.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('aitelda-theme', next);
+  // Update any toggle buttons on page
+  document.querySelectorAll('.theme-toggle-btn').forEach(function(btn) {
+    btn.title = next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  });
+}
+
+// Apply saved theme immediately (also handles no-flash on load)
+(function() {
+  var saved = localStorage.getItem('aitelda-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+</script>
+
+</body>
+</html>
